@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { haptic } from '../native/Haptics.js';
 import { bindPhoneInput, setSoftKeys } from '../input/PhoneInput.js';
 import { isFrozen } from '../ui/PauseOverlay.js';
 import * as Sfx from '../audio/Sfx.js';
@@ -244,6 +245,7 @@ export default class HopperScene extends Phaser.Scene {
     this.zaps += 1;
     this.lastCause = cause;
     Sfx.play('hopZap');
+    haptic('crash');
     this.cameras.main.shake(180, 0.012);
     this.flashWarn(cause);
     this.refreshHud();

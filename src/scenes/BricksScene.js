@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import { haptic } from '../native/Haptics.js';
+import { gameRng } from '../daily/rng.js';
 import { bindPhoneInput, isHeld, setSoftKeys } from '../input/PhoneInput.js';
 import { attachPause, isFrozen, gameNow } from '../ui/PauseOverlay.js';
 import { hexToInt, shadeHex } from '../skins/skins.js';
@@ -40,6 +42,7 @@ export default class BricksScene extends Phaser.Scene {
   }
 
   create() {
+    gameRng(this);          // seeded on Daily Challenge runs
     const pal = getSkin().palette;
     this.pal = {
       bg: hexToInt(pal.bg),
@@ -131,9 +134,9 @@ export default class BricksScene extends Phaser.Scene {
   serve() {
     if (!this.serving || !this.alive) return;
     this.serving = false;
-    const dir = Phaser.Math.Between(0, 1) ? 1 : -1;
+    const dir = this.rng.between(0, 1) ? 1 : -1;
     const speed = START_SPEED + (this.level - 1) * 16;
-    const angle = Phaser.Math.DegToRad(-70 + dir * Phaser.Math.Between(8, 22));
+    const angle = Phaser.Math.DegToRad(-70 + dir * this.rng.between(8, 22));
     this.ball.vx = Math.cos(angle) * speed * (dir);
     // Launch upward regardless of the sideways sign
     this.ball.vy = -Math.abs(Math.sin(angle) * speed);
@@ -352,6 +355,7 @@ export default class BricksScene extends Phaser.Scene {
       this.floatText(brick.x + brick.w / 2, brick.y, n > 1 ? `CHAIN x${n} +${gained}` : `+${gained}`, this.pal.css.warn);
       this.cameras.main.shake(80 + Math.min(120, n * 20), 0.004 + n * 0.001);
       Sfx.bricksChain(n);
+      if (n > 1) haptic('combo');
     } else {
       brick.alive = false;
       removed.push(brick);
@@ -411,6 +415,7 @@ export default class BricksScene extends Phaser.Scene {
   }
 
   loseLife() {
+    haptic('crash');
     this.lives -= 1;
     this.cameras.main.shake(140, 0.008);
     Sfx.bricksLifeLost();

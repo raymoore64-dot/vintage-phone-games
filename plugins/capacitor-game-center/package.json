@@ -1,0 +1,25 @@
+{
+  "name": "@studiolinicro/capacitor-game-center",
+  "version": "0.1.0",
+  "description": "Tiny local Capacitor plugin: Game Center sign-in, scores, leaderboards and achievements (iOS only; no-op elsewhere).",
+  "license": "UNLICENSED",
+  "private": true,
+  "author": "Studio Linicro",
+  "type": "module",
+  "main": "web/index.js",
+  "module": "web/index.js",
+  "files": [
+    "web/",
+    "ios/Sources",
+    "Package.swift",
+    "StudiolinicroCapacitorGameCenter.podspec"
+  ],
+  "capacitor": {
+    "ios": {
+      "src": "ios"
+    }
+  },
+  "peerDependencies": {
+    "@capacitor/core": ">=8.0.0"
+  }
+}

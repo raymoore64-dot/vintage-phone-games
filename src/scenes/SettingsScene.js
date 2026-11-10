@@ -7,18 +7,19 @@ import * as Music from '../audio/Music.js';
 import * as Calls from '../phone/Calls.js';
 import * as Eggs from '../phone/Eggs.js';
 import * as Power from '../phone/Power.js';
+import * as Haptics from '../native/Haptics.js';
 
 /*
  * Settings (menu 8)
- *   ▲▼ / 2 8 choose · OK / 5 / left soft change · 1-5 jump + change
+ *   ▲▼ / 2 8 choose · OK / 5 / left soft change · 1-6 jump + change
  *   C / right soft back to the menu
  * Rows: Sound, Music, Calls (fake incoming calls on/off), Code book,
- * Power off (same as holding the red C key / Esc / End).
+ * Haptics (vibration / Taptic feedback on/off), Power off (same as holding the red C key / Esc / End).
  */
 
-const ROWS = ['sound', 'music', 'calls', 'codebook', 'power'];
-const TOP = 66;
-const ROW_H = 56;
+const ROWS = ['sound', 'music', 'calls', 'codebook', 'haptics', 'power'];
+const TOP = 62;
+const ROW_H = 49;
 
 export default class SettingsScene extends Phaser.Scene {
   constructor() {
@@ -40,7 +41,7 @@ export default class SettingsScene extends Phaser.Scene {
 
     this.rows = ROWS.map((id, i) => {
       const y = TOP + i * ROW_H + ROW_H / 2;
-      const bg = this.add.rectangle(180, y, 336, 48, hexToInt(pal.panel)).setInteractive({ useHandCursor: true });
+      const bg = this.add.rectangle(180, y, 336, 42, hexToInt(pal.panel)).setInteractive({ useHandCursor: true });
       const num = this.add.text(30, y, String(i + 1), mono('20px', pal.fg)).setOrigin(0, 0.5);
       const label = this.add.text(60, y, '', mono('17px', pal.text)).setOrigin(0, 0.5);
       const value = this.add.text(334, y, '', mono('15px', pal.warn)).setOrigin(1, 0.5);
@@ -48,7 +49,7 @@ export default class SettingsScene extends Phaser.Scene {
       return { id, bg, num, label, value };
     });
 
-    this.note = this.add.text(180, 374, '', {
+    this.note = this.add.text(180, 388, '', {
       ...mono('13px', pal.accent), align: 'center', wordWrap: { width: 320 }
     }).setOrigin(0.5);
     this.add.text(180, 440, '▲▼ choose · OK change · C back', mono('13px', pal.dim)).setOrigin(0.5);
@@ -93,6 +94,7 @@ export default class SettingsScene extends Phaser.Scene {
       music: ['Music', Music.isMusicEnabled() ? 'On' : 'Off', 'Chiptune loops. N toggles anywhere.'],
       calls: ['Calls', Calls.callsEnabled() ? 'On' : 'Off', 'Friends (and The Bank) sometimes ring mid-game. Answer for a bonus.'],
       codebook: ['Code book', `${Eggs.foundCount()}/${Eggs.totalCount()}`, 'Secret words: on the menu press * * then spell a word.'],
+      haptics: ['Haptics', Haptics.hapticsEnabled() ? 'On' : 'Off', 'Buzzes for texts, calls, crashes, combos and keys (Taptic Engine in the app).'],
       power: ['Power off', '', 'Or hold the red C key (Esc / End).']
     };
   }
@@ -124,6 +126,7 @@ export default class SettingsScene extends Phaser.Scene {
     if (id === 'sound') Sfx.toggleMuteWithClick();
     else if (id === 'music') { Music.toggle(); Sfx.menuSelect(); }
     else if (id === 'calls') { Calls.toggleCalls(); Sfx.menuSelect(); }
+    else if (id === 'haptics') { const on = Haptics.toggleHaptics(); Sfx.menuSelect(); if (on) Haptics.haptic('combo'); }
     else if (id === 'codebook') { Sfx.menuSelect(); this.scene.start('CodeBookScene', { from: 'settings' }); return; }
     else if (id === 'power') { Power.powerOff(); return; }
     this.refresh();

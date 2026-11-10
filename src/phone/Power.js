@@ -30,6 +30,7 @@ import * as Music from '../audio/Music.js';
 import { setSilenced } from '../audio/beep.js';
 import { GAME_SCENES } from './Phone.js';
 import * as Phone from './Phone.js';
+import * as Haptics from '../native/Haptics.js';
 
 const STORE = 'vpg.power';
 const SESSION = 'vpg.booted';
@@ -151,6 +152,7 @@ function boot() {
   Music.pause('power');
   setSilenced(false);
   boots += 1;
+  if (boots > 1 || rebootToMenu) Haptics.haptic('powerOn');
   const skin = getSkin();
   const key = brandKey(skin);
   show(`boot b-${key}`, `
@@ -236,6 +238,7 @@ export function powerOff() {
   emit();                       // Calls hang up here
   Music.pause('power');
   Sfx.play('powerOff');
+  Haptics.haptic('powerOff');
   const skin = getSkin();
   show(`shutdown b-${brandKey(skin)}`, `
     <div class="pw-logo">${logoSvg(skin)}</div>

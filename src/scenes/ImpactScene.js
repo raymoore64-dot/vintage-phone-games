@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { gameRng } from '../daily/rng.js';
 import { bindPhoneInput, isHeld, setSoftKeys } from '../input/PhoneInput.js';
 import { attachPause, isFrozen, gameNow } from '../ui/PauseOverlay.js';
 import { hexToInt, shadeHex } from '../skins/skins.js';
@@ -8,6 +9,7 @@ import * as Sfx from '../audio/Sfx.js';
 import * as Music from '../audio/Music.js';
 import { attachPerks, perkSpeed, perkPoints, perkLives, toughLives, hasLuck } from '../skins/perks.js';
 import { onRunStart } from '../phone/Sms.js';
+import { haptic } from '../native/Haptics.js';
 
 // ---- Tuning -------------------------------------------------------------
 const W = 360;
@@ -33,6 +35,7 @@ export default class ImpactScene extends Phaser.Scene {
   }
 
   create() {
+    gameRng(this);          // seeded on Daily Challenge runs
     const pal = getSkin().palette;
     this.pal = {
       bg: hexToInt(pal.bg),
@@ -76,9 +79,9 @@ export default class ImpactScene extends Phaser.Scene {
     this.bullets = [];
     this.pickups = [];
     this.stars = Array.from({ length: 28 }, () => ({
-      x: Math.random() * W,
-      y: HUD_H + Math.random() * (H - HUD_H),
-      s: 0.4 + Math.random() * 1.4
+      x: Math.random() * W,  // cosmetic: stays unseeded
+      y: HUD_H + Math.random() * (H - HUD_H),  // cosmetic: stays unseeded
+      s: 0.4 + Math.random() * 1.4  // cosmetic: stays unseeded
     }));
     this.boss = null;
 
@@ -284,7 +287,7 @@ export default class ImpactScene extends Phaser.Scene {
       s.x -= s.s * spd * dt;
       if (s.x < 0) {
         s.x = W;
-        s.y = HUD_H + Math.random() * (H - HUD_H);
+        s.y = HUD_H + Math.random() * (H - HUD_H);  // cosmetic: stays unseeded
       }
     }
   }
@@ -366,13 +369,13 @@ export default class ImpactScene extends Phaser.Scene {
     this.spawnTimer -= dt;
     if (this.spawnTimer > 0) return;
     const scale = Math.max(0.42, 1.15 - this.score / 4000);
-    this.spawnTimer = Phaser.Math.FloatBetween(0.45, 1.15) * scale;
+    this.spawnTimer = this.rng.float(0.45, 1.15) * scale;
     this.spawnEnemy();
   }
 
   spawnEnemy() {
-    const y = Phaser.Math.Between(HUD_H + 24, H - 24);
-    const roll = Math.random();
+    const y = this.rng.between(HUD_H + 24, H - 24);
+    const roll = this.rng.next();
     const speedBoost = Math.min(70, this.score / 35);
     if (this.score > 350 && roll < 0.22) {
       this.enemies.push({
@@ -385,9 +388,9 @@ export default class ImpactScene extends Phaser.Scene {
       this.enemies.push({
         kind: 'sine', x: W + 16, y, baseY: y, vx: -(70 + speedBoost * 0.5),
         hp: 1, r: 10, score: 75,
-        amp: Phaser.Math.Between(28, 64),
-        phase: Math.random() * Math.PI * 2,
-        freq: 1.6 + Math.random() * 1.4
+        amp: this.rng.between(28, 64),
+        phase: this.rng.next() * Math.PI * 2,
+        freq: 1.6 + this.rng.next() * 1.4
       });
     } else {
       this.enemies.push({
@@ -482,15 +485,15 @@ export default class ImpactScene extends Phaser.Scene {
     Sfx.impactExplosion();
     if (e.kind === 'boss') {
       this.boss = null;
-      this.dropPickup(e.x, e.y, Math.random() < 0.5 ? 'rapid' : 'shield');
-      this.dropPickup(e.x, e.y + 18, Math.random() < 0.5 ? 'rapid' : 'shield');
-    } else if (Math.random() < (hasLuck(this) ? 0.21 : 0.12) || this.killed % 10 === 0) {
-      this.dropPickup(e.x, e.y, Math.random() < 0.5 ? 'rapid' : 'shield');
+      this.dropPickup(e.x, e.y, this.rng.next() < 0.5 ? 'rapid' : 'shield');
+      this.dropPickup(e.x, e.y + 18, this.rng.next() < 0.5 ? 'rapid' : 'shield');
+    } else if (this.rng.next() < (hasLuck(this) ? 0.21 : 0.12) || this.killed % 10 === 0) {
+      this.dropPickup(e.x, e.y, this.rng.next() < 0.5 ? 'rapid' : 'shield');
     }
   }
 
   dropPickup(x, y, kind) {
-    this.pickups.push({ x, y, vx: -30, kind, taken: false, wobble: Math.random() * 800 });
+    this.pickups.push({ x, y, vx: -30, kind, taken: false, wobble: this.rng.next() * 800 });
   }
 
   hitPlayer() {
@@ -503,6 +506,7 @@ export default class ImpactScene extends Phaser.Scene {
       return;
     }
     this.lives -= 1;
+    haptic('crash');
     this.cameras.main.shake(160, 0.01);
     Sfx.impactPlayerHit();
     if (this.lives <= 0) {

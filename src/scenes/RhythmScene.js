@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { haptic } from '../native/Haptics.js';
 import { bindPhoneInput, setSoftKeys } from '../input/PhoneInput.js';
 import { isFrozen, gameNow } from '../ui/PauseOverlay.js';
 import * as Sfx from '../audio/Sfx.js';
@@ -299,7 +300,7 @@ export default class RhythmScene extends Phaser.Scene {
       this.health = Math.min(100, this.health + (j === 'perfect' ? 3 : 1));
       if (src !== 'audio') Sfx.tone('rhythmTap', hz(note.midi), 0.12, 'square', 0.09);
       else Sfx.play(j === 'perfect' ? 'rhythmPerfect' : 'rhythmGood');
-      if (this.combo % 10 === 0) Sfx.play('rhythmCombo');
+      if (this.combo % 10 === 0) { Sfx.play('rhythmCombo'); haptic('combo'); }
     }
     const base = { perfect: 30, good: 15, bad: 3, miss: 0 }[j];
     if (base) {

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { gameRng } from '../daily/rng.js';
 import { bindPhoneInput, isHeld, setSoftKeys } from '../input/PhoneInput.js';
 import { attachPause, isFrozen, gameNow } from '../ui/PauseOverlay.js';
 import { hexToInt, shadeHex } from '../skins/skins.js';
@@ -36,6 +37,7 @@ export default class BounceScene extends Phaser.Scene {
   }
 
   create() {
+    gameRng(this);          // seeded on Daily Challenge runs
     const pal = getSkin().palette;
     this.pal = {
       bg: hexToInt(pal.bg),
@@ -396,7 +398,7 @@ export default class BounceScene extends Phaser.Scene {
     let forced = null;
     if (dist < this.seedSafeUntil) forced = 'safe';
     const prev = this.segments[this.segments.length - 1];
-    this.addSegment(this.makeSegment(this.nextX, Phaser.Math.Between(150, 230), { forced, diff, prev }));
+    this.addSegment(this.makeSegment(this.nextX, this.rng.between(150, 230), { forced, diff, prev }));
   }
 
   addSegment(seg) {
@@ -418,9 +420,9 @@ export default class BounceScene extends Phaser.Scene {
     } else if (prev) {
       // Walk heights gently so adjacent segments don't form unfair cliffs
       const maxStep = 26;
-      let gap = prev.floorY - prev.ceilY + Phaser.Math.Between(-22, 22);
+      let gap = prev.floorY - prev.ceilY + this.rng.between(-22, 22);
       gap = Phaser.Math.Clamp(gap, minGap, maxGap);
-      ceilY = prev.ceilY + Phaser.Math.Between(-maxStep, maxStep);
+      ceilY = prev.ceilY + this.rng.between(-maxStep, maxStep);
       ceilY = Phaser.Math.Clamp(ceilY, topMin, botMax - gap);
       floorY = ceilY + gap;
       if (floorY > botMax) {
@@ -428,9 +430,9 @@ export default class BounceScene extends Phaser.Scene {
         ceilY = floorY - gap;
       }
     } else {
-      const gap = Phaser.Math.Between(minGap, maxGap);
+      const gap = this.rng.between(minGap, maxGap);
       const slack = Math.max(0, (botMax - topMin) - gap);
-      const offset = Phaser.Math.Between(0, slack);
+      const offset = this.rng.between(0, slack);
       ceilY = topMin + offset;
       floorY = ceilY + gap;
     }
@@ -448,7 +450,7 @@ export default class BounceScene extends Phaser.Scene {
 
     if (forced === 'safe') return seg;
 
-    const roll = Math.random();
+    const roll = this.rng.next();
     const spikeChance = 0.22 + diff * 0.15;
     const gapChance = 0.1 + diff * 0.06;
     const ringChance = 0.24;
@@ -456,18 +458,18 @@ export default class BounceScene extends Phaser.Scene {
     const tunnel = floorY - ceilY;
 
     if (roll < spikeChance) {
-      this.placeSpikes(seg, 'floor', 1 + Math.floor(Math.random() * (diff > 0.5 ? 3 : 2)));
+      this.placeSpikes(seg, 'floor', 1 + Math.floor(this.rng.next() * (diff > 0.5 ? 3 : 2)));
     } else if (roll < spikeChance * 1.8) {
-      this.placeSpikes(seg, 'ceil', 1 + Math.floor(Math.random() * 2));
+      this.placeSpikes(seg, 'ceil', 1 + Math.floor(this.rng.next() * 2));
     } else if (roll < spikeChance * 2.15 && tunnel >= 180) {
       // Staggered spikes on both sides, never stacked on the same x
       this.placeSpikes(seg, 'floor', 1, 0.22);
       this.placeSpikes(seg, 'ceil', 1, 0.62);
     } else if (roll < spikeChance * 2.15 + gapChance) {
       // A short, readable hole — not the whole segment — so you have time to flip
-      const hw = Phaser.Math.Between(52, 78);
-      const hx = x + Phaser.Math.Between(40, Math.max(40, w - hw - 40));
-      if (Math.random() < 0.5) seg.floorHole = { x: hx, w: hw };
+      const hw = this.rng.between(52, 78);
+      const hx = x + this.rng.between(40, Math.max(40, w - hw - 40));
+      if (this.rng.next() < 0.5) seg.floorHole = { x: hx, w: hw };
       else seg.ceilHole = { x: hx, w: hw };
       const y = seg.floorHole ? seg.floorY - 52 : seg.ceilY + 52;
       seg.rings.push(this.makeRing(hx - 28, y));
@@ -478,15 +480,15 @@ export default class BounceScene extends Phaser.Scene {
       seg.movers.push({
         x: x + w * 0.55,
         y: mid,
-        vy: (Math.random() < 0.5 ? 1 : -1) * (70 + diff * 50),
+        vy: (this.rng.next() < 0.5 ? 1 : -1) * (70 + diff * 50),
         minY: seg.ceilY + 28,
         maxY: seg.floorY - 28
       });
     }
 
     // Occasional extra ring in a spike segment, placed away from the spikes
-    if (seg.spikes.length && Math.random() < 0.4) {
-      const y = Math.random() < 0.5 ? seg.floorY - 58 : seg.ceilY + 58;
+    if (seg.spikes.length && this.rng.next() < 0.4) {
+      const y = this.rng.next() < 0.5 ? seg.floorY - 58 : seg.ceilY + 58;
       seg.rings.push(this.makeRing(x + w * 0.18, y));
     }
 
@@ -513,7 +515,7 @@ export default class BounceScene extends Phaser.Scene {
   placeRings(seg) {
     const floorBand = seg.floorY - 56;
     const ceilBand = seg.ceilY + 56;
-    if (Math.random() < 0.45 && seg.floorY - seg.ceilY > 170) {
+    if (this.rng.next() < 0.45 && seg.floorY - seg.ceilY > 170) {
       // Vertical pair: collect both by flipping, bonus if you flip between them
       const rx = seg.x + seg.w * 0.55;
       const a = this.makeRing(rx, floorBand);
@@ -521,7 +523,7 @@ export default class BounceScene extends Phaser.Scene {
       seg.rings.push(a, b);
       seg.pair = [a, b];
     } else {
-      const y = Math.random() < 0.5 ? floorBand : ceilBand;
+      const y = this.rng.next() < 0.5 ? floorBand : ceilBand;
       seg.rings.push(this.makeRing(seg.x + seg.w * 0.5, y));
     }
   }

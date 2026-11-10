@@ -14,6 +14,8 @@ import * as Wap from '../wap/Wap.js';
 import * as Pet from '../pet/Pet.js';
 import { drawPet } from '../pet/sprites.js';
 import { BASE_GAMES } from '../games.js';
+import * as Daily from '../daily/Daily.js';
+import { isNative } from '../native/Native.js';
 
 /*
  * Menu keys
@@ -44,9 +46,11 @@ export function buildMenuItems() {
   return [
     ...games,
     ...wap,
+    { id: 'daily', name: 'Daily Challenge', scene: 'DailyScene', dailyHub: true, key: null, label: '!' },
     { id: 'pet', name: 'Pocket Pet', scene: 'PetScene', pet: true, key: null, label: '♥' },
     { id: 'wap', name: 'WAP Downloads', scene: 'WapScene', wapHub: true, key: null, label: '@' },
     { id: 'share', name: 'Share score', scene: 'ShareScene', share: true, key: null, label: '»' },
+    { id: 'leaderboards', name: 'Leaderboards', scene: 'LeaderboardScene', boards: true, key: null, label: '≡' },
     { id: 'inbox', name: 'Messages', scene: 'InboxScene', inbox: true, key: '7', label: '7' },
     { id: 'settings', name: 'Settings', scene: 'SettingsScene', settings: true, key: '8', label: '8' }
   ];
@@ -406,6 +410,7 @@ export default class MenuScene extends Phaser.Scene {
       else if (item.wapHub) { const n = Wap.readyCount(); badge = n ? `${n} GET` : ''; }
       else if (item.pet) { const m = Pet.mood(); badge = m === 'grumpy' || m === 'sick' ? '!' : Pet.isAsleep() ? 'Zz' : ''; }
       else if (item.wap && item.isNew) badge = 'NEW';
+      else if (item.dailyHub) { const k = Daily.currentStreak(); badge = Daily.attempted() ? (k > 1 ? `x${k}` : 'DONE') : 'PLAY'; }
       else if (dare && dare.today && !dare.done && dare.game === item.game) badge = 'DARE';
       row.badge.setText(badge);
     });
@@ -473,6 +478,16 @@ export default class MenuScene extends Phaser.Scene {
       this.info.setText('Make a score card PNG');
       return;
     }
+    if (item.dailyHub) {
+      const c = Daily.challengeFor(Daily.today());
+      const e = Daily.entry();
+      this.info.setText(e ? `#${c.n} done: ${e.score} · streak ${Daily.currentStreak()}` : `#${c.n}: ${c.gameName} · ${c.mod.name}`);
+      return;
+    }
+    if (item.boards) {
+      this.info.setText(isNative() ? 'Game Center leaderboards' : 'Your best scores');
+      return;
+    }
     if (item.inbox) {
       const n = Sms.list().length;
       const u = Sms.unreadCount();
@@ -497,7 +512,8 @@ export default class MenuScene extends Phaser.Scene {
     if (!item || !item.scene) return;
     if (item.wap) Wap.markPlayed(item.id);
     Sfx.menuSelect();
-    this.scene.start(item.scene);
+    // explicit data: a plain launch must never inherit a Daily run's seed
+    this.scene.start(item.scene, { from: 'menu' });
   }
 
   showToast(msg) {

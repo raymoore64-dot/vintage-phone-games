@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { gameRng } from '../daily/rng.js';
 import { bindPhoneInput, isHeld, setSoftKeys } from '../input/PhoneInput.js';
 import { attachPause, isFrozen, gameNow } from '../ui/PauseOverlay.js';
 import { hexToInt, shadeHex } from '../skins/skins.js';
@@ -82,6 +83,7 @@ export default class BlocksScene extends Phaser.Scene {
   }
 
   create() {
+    gameRng(this);          // seeded on Daily Challenge runs
     const pal = getSkin().palette;
     this.pal = {
       bg: hexToInt(pal.bg),
@@ -195,7 +197,7 @@ export default class BlocksScene extends Phaser.Scene {
     if (!this.bag.length) {
       this.bag = TYPES.slice();
       for (let i = this.bag.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
+        const j = Math.floor(this.rng.next() * (i + 1));
         [this.bag[i], this.bag[j]] = [this.bag[j], this.bag[i]];
       }
     }

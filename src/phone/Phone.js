@@ -24,6 +24,7 @@ import * as Lcd from './Lcd.js';
 import * as Secrets from './Secrets.js';
 import * as Sfx from '../audio/Sfx.js';
 import CARTRIDGES from '../wap/catalog.js';
+import * as Haptics from '../native/Haptics.js';
 
 export const STORAGE_KEY = 'vpg.phone';
 export const GAME_SCENES = new Set([
@@ -298,13 +299,8 @@ export function buzz() {
     clearTimeout(el._buzzTimer);
     el._buzzTimer = setTimeout(() => el.classList.remove('buzz'), 520);
   }
-  try {
-    // Only after a real tap/keypress, or browsers log an intervention warning
-    const ua = navigator.userActivation;
-    if (navigator.vibrate && ua && ua.hasBeenActive) navigator.vibrate([90, 60, 90]);
-  } catch {
-    // not supported
-  }
+  // Haptics module: Taptic on iOS, navigator.vibrate on web (after a gesture)
+  Haptics.haptic('sms');
 }
 
 /**
@@ -314,13 +310,7 @@ export function buzz() {
  */
 export function vibrate(pattern) {
   window.__vpgVibes = (window.__vpgVibes || 0) + 1;
-  try {
-    const ua = navigator.userActivation;
-    if (navigator.vibrate && (!ua || ua.hasBeenActive)) return !!navigator.vibrate(pattern);
-  } catch {
-    // not supported
-  }
-  return false;
+  return Haptics.vibrate(pattern);
 }
 
 // ---- Init -----------------------------------------------------------------
@@ -350,6 +340,7 @@ export function initPhone(g) {
       timeScale
     }),
     setTimeScale: (n) => { timeScale = Math.max(0, Number(n) || 1); return timeScale; },
+    buzz: () => buzz(),
     setBattery: (n) => { state.battery = Math.min(100, Math.max(0, Number(n) || 0)); rescue = null; Lcd.setDim(false); render(true); save(true); return state.battery; },
     setSignal: (n, lock = true) => { signal = Math.max(1, Math.min(5, Number(n) || 1)); signalLocked = !!lock; render(true); return signal; },
     setHour: (h) => { hourOverride = h == null ? null : Number(h); render(true); return hour(); },

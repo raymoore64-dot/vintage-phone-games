@@ -33,6 +33,8 @@ import * as Wap from '../wap/Wap.js';
 import * as Pet from '../pet/Pet.js';
 import { gameName, bestOf } from '../games.js';
 import { shareScore } from '../share/ScoreCard.js';
+import { dailyOf, makeRng } from '../daily/rng.js';
+import { attachDailyRun } from '../daily/dailyRun.js';
 
 const BASE = {
   speed: 1,
@@ -103,6 +105,22 @@ export function perkFor(skinId) {
   return { ...BASE, ...p };
 }
 
+/**
+ * Daily Challenge runs ignore the phone's perk so everyone plays the same
+ * rules: the day's modifier replaces it (speed / score / lives / glitch).
+ */
+export function dailyPerk(daily) {
+  const m = (daily && daily.mod) || {};
+  return {
+    ...BASE,
+    id: 'daily', name: `Daily #${daily ? daily.n : 0}`,
+    desc: `${m.name || 'Standard'}: ${m.desc || ''}`.trim(),
+    speed: m.speed || 1, score: m.score || 1, glitch: !!m.glitch,
+    livesOverride: Number.isFinite(m.lives) ? m.lives : null,
+    glitchMin: 12000, glitchMax: 20000
+  };
+}
+
 export function currentPerk() {
   return perkFor(getSkin().id);
 }
@@ -118,6 +136,7 @@ export function perkSpeed(scene) {
 
 export function perkLives(scene, base) {
   const r = rt(scene);
+  if (r && Number.isFinite(r.perk.livesOverride)) return Math.max(1, r.perk.livesOverride);
   const d = r ? r.perk.lifeDelta : 0;
   return Math.max(1, base + d);
 }
@@ -145,7 +164,7 @@ export function perkPoints(scene, base, opts = {}) {
   let mult = r.perk.score * (r.fullCharge ? FULL_CHARGE_BONUS : 1);
   if (r.glitchUntil && gameNow(scene) < r.glitchUntil) mult *= 2;
   let lucky = false;
-  if (!opts.quiet && r.perk.luck > 0 && Math.random() < r.perk.luck) {
+  if (!opts.quiet && r.perk.luck > 0 && r.rand() < r.perk.luck) {
     mult *= 2;
     lucky = true;
   }
@@ -229,10 +248,19 @@ function showBanner(scene, perk, fullCharge) {
 /** Call once in a game scene's create(), after attachPause(). */
 export function attachPerks(scene, gameId) {
   const skin = getSkin();
-  const perk = perkFor(skin.id);
-  const fullCharge = Phone.batteryLevel() >= 99;
+  const daily = dailyOf(scene);
+  const perk = daily ? dailyPerk(daily) : perkFor(skin.id);
+  const fullCharge = daily ? false : Phone.batteryLevel() >= 99;
   const now = gameNow(scene);
+  // perk timers draw from their own stream; seeded on daily runs
+  const prng = daily ? makeRng((daily.seed ^ 0x9e3779b9) >>> 0) : null;
+  const rand = prng ? prng.next : Math.random;
+  const gMin = perk.glitchMin || GLITCH_MIN;
+  const gMax = perk.glitchMax || GLITCH_MAX;
+  const between = (a, b) => Math.floor(rand() * (b - a + 1)) + a;
   const r = {
+    rand,
+    daily,
     gameId,
     skinId: skin.id,
     perk,
@@ -242,7 +270,7 @@ export function attachPerks(scene, gameId) {
     luckyHits: 0,
     toughUsed: false,
     nextSunAt: perk.sunlight ? now + perk.sunEvery : Infinity,
-    nextGlitchAt: perk.glitch ? now + Phaser.Math.Between(GLITCH_MIN, GLITCH_MAX) : Infinity,
+    nextGlitchAt: perk.glitch ? now + between(gMin, gMax) : Infinity,
     glitchUntil: 0,
     glitches: 0,
     suns: 0
@@ -253,13 +281,15 @@ export function attachPerks(scene, gameId) {
   Lcd.setSunlight(!!perk.sunlight);
   showBanner(scene, perk, fullCharge);
 
-  // Batch A: T9 code-book eggs armed for this run, and the fake-call roll
-  const eggs = Eggs.applyRun(scene);
+  // Batch A: T9 code-book eggs armed for this run, and the fake-call roll.
+  // Daily runs skip both (same rules for everyone, no call bonuses).
+  const eggs = daily ? [] : Eggs.applyRun(scene);
   if (eggs.length) {
     const names = { disco: 'DISCO MODE!', flip: 'UPSIDE DOWN!', pixel: 'FAT PIXELS!' };
     scene.time.delayedCall(2600, () => popText(scene, eggs.map((e) => names[e]).join(' '), 'warn'));
   }
-  attachCalls(scene, gameId);
+  if (!daily) attachCalls(scene, gameId);
+  if (daily) attachDailyRun(scene, daily);
   // Batch B: WAP games lose their NEW badge once played; game over offers '* share'
   if (Wap.get(gameId)) Wap.markPlayed(gameId);
   attachShareHook(scene, gameId);
@@ -273,7 +303,7 @@ export function attachPerks(scene, gameId) {
       addBonus(scene, perk.sunBonus, 'SUN');
     }
     if (t >= r.nextGlitchAt) {
-      r.nextGlitchAt = t + GLITCH_LEN + Phaser.Math.Between(GLITCH_MIN, GLITCH_MAX);
+      r.nextGlitchAt = t + GLITCH_LEN + between(gMin, gMax);
       r.glitchUntil = t + GLITCH_LEN;
       r.glitches += 1;
       Lcd.glitch();
@@ -300,6 +330,7 @@ export function attachPerks(scene, gameId) {
     glitches: r.glitches,
     suns: r.suns,
     glitchActive: !!(r.glitchUntil && gameNow(scene) < r.glitchUntil),
+    daily: daily ? { n: daily.n, mod: daily.mod.id, practice: !!daily.practice } : null,
     lives: scene.lives ?? null,
     maxLives: scene.maxLives ?? null
   });

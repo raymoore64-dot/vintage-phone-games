@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { gameRng } from '../daily/rng.js';
 import { bindPhoneInput, setSoftKeys } from '../input/PhoneInput.js';
 import { attachPause, isFrozen, gameNow } from '../ui/PauseOverlay.js';
 import { hexToInt, shadeHex } from '../skins/skins.js';
@@ -34,6 +35,7 @@ export default class SimonScene extends Phaser.Scene {
   }
 
   create() {
+    gameRng(this);          // seeded on Daily Challenge runs
     const pal = getSkin().palette;
     // 9 distinct cell colours, all readable against pal.bg. We mix the
     // skin palette with a spread of hues so cells stay unique even on a
@@ -246,7 +248,7 @@ export default class SimonScene extends Phaser.Scene {
   nextRound() {
     if (!this.alive) return;
     this.round += 1;
-    this.sequence.push(Phaser.Math.Between(0, 8));
+    this.sequence.push(this.rng.between(0, 8));
     this.reverse = this.round % 3 === 0;
     this.inputIndex = 0;
     this.phase = 'watch';

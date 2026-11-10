@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import * as Haptics from '../native/Haptics.js';
 import { bindPhoneInput, setSoftKeys } from '../input/PhoneInput.js';
 import { isFrozen, gameNow } from '../ui/PauseOverlay.js';
 import * as Sfx from '../audio/Sfx.js';
@@ -324,7 +325,7 @@ export default class FishingScene extends Phaser.Scene {
 
   pulse(p) {
     const strength = Math.round(10 + 55 * p);
-    Phone.vibrate(strength);
+    Haptics.fish(p);
     Sfx.tone('fishBuzz', 150 + 650 * p, 0.05 + 0.04 * p, 'square', 0.04 + 0.08 * p);
     if (p > 0.05) this.cameras.main.shake(90, 0.0006 + 0.006 * p * p);
     const b = this.bobber();
@@ -371,7 +372,7 @@ export default class FishingScene extends Phaser.Scene {
       if (t >= w.biteAt && !w.bit) {
         w.bit = true;
         Sfx.play('fishBite');
-        Phone.vibrate([60, 40, 60]);
+        Haptics.haptic('bite');
         this.cameras.main.shake(260, 0.009);
         this.dipUntil = t + w.window;
       }

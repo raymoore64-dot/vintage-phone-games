@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { haptic } from '../native/Haptics.js';
 
 /*
  * One input bus for the whole phone.
@@ -177,6 +178,7 @@ export function initPhoneInput() {
       e.preventDefault();
       try { el.setPointerCapture(e.pointerId); } catch { /* older browsers */ }
       const d = el.dataset.digit;
+      haptic('key');
       if (d !== undefined) {
         pointerHolds.set(e.pointerId, { action: 'digit', digit: d });
         rebuildHeld();

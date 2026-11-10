@@ -35,6 +35,18 @@ import { initPhone } from './phone/Phone.js';
 import { initLcd } from './phone/Lcd.js';
 import { initSms } from './phone/Sms.js';
 import { publishPerks } from './skins/perks.js';
+import DailyScene from './scenes/DailyScene.js';
+import LeaderboardScene from './scenes/LeaderboardScene.js';
+import { initNative } from './native/Native.js';
+import { publishHaptics, haptic } from './native/Haptics.js';
+import { initGameCenter } from './native/GameCenter.js';
+import { publishDaily } from './daily/Daily.js';
+import { onRun } from './progress/Progress.js';
+
+// Batch D: platform layer first (status bar, app pause/resume, back button)
+initNative();
+publishHaptics();
+publishDaily();
 
 // Wire up the on-screen keypad and the physical keyboard
 initPhoneInput();
@@ -67,7 +79,9 @@ const config = {
     SettingsScene, CodeBookScene, CreditsScene,
     WapScene, PetScene, ShareScene,
     // WAP cartridges: registering a scene makes its catalogue entry downloadable
-    HopperScene, FishingScene, RhythmScene, RallyScene
+    HopperScene, FishingScene, RhythmScene, RallyScene,
+    // Batch D: Daily Challenge + Leaderboards / achievements
+    DailyScene, LeaderboardScene
   ],
   physics: {
     default: 'arcade',
@@ -94,6 +108,9 @@ publishEggs();
 initWap(game);
 initPet();
 publishShare();
+// Batch D: Game Center (no-op on web) and a haptic at every game over
+initGameCenter();
+onRun((evt) => { if (evt && evt.kind === 'run') haptic(evt.newBest ? 'newBest' : 'gameOver'); });
 window.__vpg = window.__vpg || {};
 window.__vpg.setSkin = (id) => setSkin(id).id;
 export default game;

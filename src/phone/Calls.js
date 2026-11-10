@@ -34,6 +34,7 @@ import * as Sms from './Sms.js';
 import * as Phone from './Phone.js';
 import * as Power from './Power.js';
 import * as Sfx from '../audio/Sfx.js';
+import * as Haptics from '../native/Haptics.js';
 
 const STORE = 'vpg.calls';
 const CHANCE = 0.25;
@@ -218,7 +219,7 @@ function ring(scene, who) {
   const tone = () => {
     if (!call || call.phase !== 'ringing') return;
     Sfx.play(data.ring);
-    vibrate([400, 200, 400]);
+    Haptics.haptic('ring');
   };
   tone();
   call.timers.push(setInterval(tone, RING_EVERY));
@@ -227,14 +228,7 @@ function ring(scene, who) {
   return true;
 }
 
-function vibrate(pattern) {
-  try {
-    const ua = navigator.userActivation;
-    if (navigator.vibrate && ua && ua.hasBeenActive) navigator.vibrate(pattern);
-  } catch {
-    // not supported
-  }
-}
+
 
 function stopRinging() {
   if (!call) return;
@@ -243,7 +237,7 @@ function stopRinging() {
   const phoneEl = document.querySelector('.phone');
   if (phoneEl) phoneEl.classList.remove('ringing');
   if (call.el) call.el.classList.remove('ringing');
-  vibrate(0);
+  Haptics.stop();
 }
 
 function onInput(action) {

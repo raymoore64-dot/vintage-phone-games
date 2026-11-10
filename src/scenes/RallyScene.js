@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { haptic } from '../native/Haptics.js';
 import { bindPhoneInput, setSoftKeys, isHeld } from '../input/PhoneInput.js';
 import { isFrozen, gameNow } from '../ui/PauseOverlay.js';
 import * as Sfx from '../audio/Sfx.js';
@@ -284,6 +285,7 @@ export default class RallyScene extends Phaser.Scene {
     this.crashes += 1;
     this.cameras.main.shake(220, 0.012);
     Sfx.play('rallyCrash');
+    haptic('crash');
     if (useTough(this)) return;
     this.speed *= 0.3;
     this.big('CRASH!');

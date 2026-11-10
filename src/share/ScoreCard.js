@@ -20,6 +20,7 @@ import * as Wear from '../phone/Wear.js';
 import * as Pet from '../pet/Pet.js';
 import { drawPet } from '../pet/sprites.js';
 import { glyph, textWidth, GLYPH_W, GLYPH_H, ADVANCE } from './pixelFont.js';
+import { isNative, shareFile } from '../native/Native.js';
 
 export const FORMATS = {
   story: { w: 1080, h: 1920 },
@@ -324,7 +325,8 @@ function drawLcd(ctx, x, y, k, info) {
   const P = (n) => n * k;
   ctx.fillStyle = pal.fg;
   ctx.fillRect(x, y, P(360), P(56));
-  pixelText(ctx, info.gameName.toUpperCase(), x + P(180), y + P(14), P(4), pal.bg, 'center', P(336));
+  const head = info.tag ? `${info.tag} ${info.gameName}` : info.gameName;
+  pixelText(ctx, head.toUpperCase(), x + P(180), y + P(14), P(4), pal.bg, 'center', P(336));
   pixelText(ctx, 'SCORE', x + P(180), y + P(84), P(3.4), pal.accent);
   const digits = String(info.score);
   pixelText(ctx, digits, x + P(180), y + P(124), P(13), pal.fg, 'center', P(330));
@@ -369,7 +371,8 @@ export function cardInfo(opts = {}) {
     score: Math.max(0, Math.floor(Number(opts.score) || 0)),
     best: Math.max(0, Math.floor(Number(opts.best) || 0)),
     newBest: !!opts.newBest,
-    perk: perkFor(skin.id).name,
+    tag: opts.tag ? String(opts.tag).toUpperCase() : '',
+    perk: opts.perkLabel || perkFor(skin.id).name,
     wear: Wear.marksFor(skin.id),
     pet: { stage: pet.stage, mood: pet.mood, name: pet.name },
     clock: `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
@@ -398,17 +401,23 @@ export function renderScoreCard(opts = {}) {
     pixelText(ctx, 'GAMES', cx, 310, 11, pal.fg, 'center', colW);
     pixelText(ctx, info.gameName.toUpperCase(), cx, 470, 6, pal.warn, 'center', colW);
     pixelText(ctx, String(info.score), cx, 540, 14, '#ffffff', 'center', colW);
-    pixelText(ctx, 'CAN YOU', cx, 700, 6, pal.accent);
-    pixelText(ctx, 'BEAT IT?', cx, 760, 6, pal.accent);
+    if (info.tag) {
+      pixelText(ctx, info.tag, cx, 700, 6, pal.accent, 'center', colW);
+      if (opts.subline) pixelText(ctx, String(opts.subline).toUpperCase(), cx, 760, 4, pal.text, 'center', colW);
+    } else {
+      pixelText(ctx, 'CAN YOU', cx, 700, 6, pal.accent);
+      pixelText(ctx, 'BEAT IT?', cx, 760, 6, pal.accent);
+    }
     pixelText(ctx, 'BY STUDIO LINICRO', cx, 950, 4, '#bbbbbb', 'center', colW);
   } else {
     pixelText(ctx, 'VINTAGE PHONE GAMES', 540, 80, 8, pal.fg, 'center', 980);
+    if (info.tag) pixelText(ctx, info.tag, 540, 150, 6, pal.warn, 'center', 980);
     const pw = 560;
     const ph = phoneHeightFor(pw, info.skin);
     const top = 220;
     drawPhone(ctx, (1080 - pw) / 2, top, pw, info);
     const fy = top + ph + 60;
-    pixelText(ctx, `CAN YOU BEAT ${info.score}?`, 540, fy, 7, pal.warn, 'center', 980);
+    pixelText(ctx, info.tag && opts.subline ? String(opts.subline).toUpperCase() : `CAN YOU BEAT ${info.score}?`, 540, fy, 7, pal.warn, 'center', 980);
     pixelText(ctx, 'BY STUDIO LINICRO', 540, Math.min(1920 - 110, fy + 100), 5, '#bbbbbb');
   }
   return c;
@@ -423,15 +432,19 @@ export function canvasToBlob(canvas) {
 
 /**
  * Hand a PNG to the OS share sheet, or download it.
- * TODO(capacitor): when running natively (window.Capacitor?.isNativePlatform()),
- * write the PNG with @capacitor/filesystem (Directory.Cache) and call
- * Share.share({ title, text, files: [uri] }) from @capacitor/share instead.
+ * Native (iOS app): the PNG is written to the cache with @capacitor/filesystem
+ * and handed to the share sheet with @capacitor/share (see native/Native.js).
+ * Web: Web Share API with the file, else a PNG download.
  * Returns { method: 'share' | 'download' | 'cancelled' | 'failed' }.
  */
 export async function shareImage(canvas, { filename = 'vintage-phone-games.png', title = 'Vintage Phone Games', text = '' } = {}) {
   const blob = await canvasToBlob(canvas);
   if (!blob) return { method: 'failed' };
   lastBlob = blob;
+  if (isNative()) {
+    const res = await shareFile(blob, { filename, title, text });
+    if (res) return res;
+  }
   try {
     const file = new File([blob], filename, { type: 'image/png' });
     if (navigator.canShare && navigator.share && navigator.canShare({ files: [file] })) {
@@ -466,11 +479,11 @@ export function slug(s) {
 /** One call: render + share. */
 export async function shareScore(opts = {}) {
   const canvas = renderScoreCard(opts);
-  const name = `vpg-${slug(opts.gameName || 'score')}-${Math.floor(Number(opts.score) || 0)}-${opts.format || 'story'}.png`;
+  const name = `vpg-${opts.tag ? `${slug(opts.tag)}-` : ''}${slug(opts.gameName || 'score')}-${Math.floor(Number(opts.score) || 0)}-${opts.format || 'story'}.png`;
   const res = await shareImage(canvas, {
     filename: name,
     title: 'Vintage Phone Games',
-    text: `I scored ${Math.floor(Number(opts.score) || 0)} in ${opts.gameName || 'a game'} on Vintage Phone Games. Can you beat it?`
+    text: opts.text || `I scored ${Math.floor(Number(opts.score) || 0)} in ${opts.gameName || 'a game'} on Vintage Phone Games. Can you beat it?`
   });
   lastShare = { ...res, filename: name, w: canvas.width, h: canvas.height };
   return lastShare;

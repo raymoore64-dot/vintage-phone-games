@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { gameRng } from '../daily/rng.js';
 import { bindPhoneInput, setSoftKeys } from '../input/PhoneInput.js';
 import { attachPause, isFrozen, gameNow } from '../ui/PauseOverlay.js';
 import { hexToInt, shadeHex } from '../skins/skins.js';
@@ -39,6 +40,7 @@ export default class SnakeScene extends Phaser.Scene {
   }
 
   create() {
+    gameRng(this);          // seeded on Daily Challenge runs
     const pal = getSkin().palette;
     this.pal = {
       bg: hexToInt(pal.bg),
@@ -298,8 +300,8 @@ export default class SnakeScene extends Phaser.Scene {
     let attempts = 0;
     do {
       pos = {
-        x: Phaser.Math.Between(0, COLS - 1),
-        y: Phaser.Math.Between(TOP, ROWS - 1)
+        x: this.rng.between(0, COLS - 1),
+        y: this.rng.between(TOP, ROWS - 1)
       };
       attempts++;
     } while (
