@@ -10,12 +10,18 @@ import * as Secrets from '../phone/Secrets.js';
 import * as Phone from '../phone/Phone.js';
 import * as Eggs from '../phone/Eggs.js';
 import * as Calls from '../phone/Calls.js';
+import * as Wap from '../wap/Wap.js';
+import * as Pet from '../pet/Pet.js';
+import { drawPet } from '../pet/sprites.js';
+import { BASE_GAMES } from '../games.js';
 
 /*
  * Menu keys
  *   ▲▼ / 2 8   choose          OK / 5 / left soft   open
  *   1-6        play a game     7                    Messages
  *   8          Settings (sound, music, calls, code book, power off)
+ *   ▲▼ also reach downloaded WAP games (•), Pocket Pet (♥),
+ *   WAP Downloads (@) and Share score (»), which have no digit.
  *   *          enter a secret code (then 4 digits; C cancels)
  *   * *        T9 WORD mode: spell a word, one key press per letter
  *              (e.g. LOL = 5 6 5). Fires on a match; OK checks;
@@ -27,17 +33,25 @@ import * as Calls from '../phone/Calls.js';
 
 const T9_KEYS = { 2: 'abc', 3: 'def', 4: 'ghi', 5: 'jkl', 6: 'mno', 7: 'pqrs', 8: 'tuv', 9: 'wxyz', 0: '␣', 1: '.,' };
 
-const ITEMS = [
-  { name: 'Snake: Trail', scene: 'SnakeScene', bestKey: 'vpg.snake.best', game: 'snake' },
-  { name: 'Bounce: Flip', scene: 'BounceScene', bestKey: 'vpg.bounce.best', game: 'bounce' },
-  { name: 'Space Impact: Echo', scene: 'ImpactScene', bestKey: 'vpg.impact.best', game: 'impact' },
-  { name: 'Bricks: Chain', scene: 'BricksScene', bestKey: 'vpg.bricks.best', game: 'bricks' },
-  { name: 'Blocks: Quake', scene: 'BlocksScene', bestKey: 'vpg.blocks.best', game: 'blocks' },
-  { name: 'Simon: Reverse', scene: 'SimonScene', bestKey: 'vpg.simon.best', game: 'simon' },
-  { name: 'Messages', scene: 'InboxScene', inbox: true },
-  { name: 'Settings', scene: 'SettingsScene', settings: true }
-];
-const INBOX_INDEX = 6;
+/** Menu rows, rebuilt on every visit so WAP downloads show up. */
+export function buildMenuItems() {
+  const games = BASE_GAMES.map((g, i) => ({
+    id: g.id, name: g.name, scene: g.scene, bestKey: g.bestKey, game: g.id, key: String(i + 1), label: String(i + 1)
+  }));
+  const wap = Wap.menuGames().map((g) => ({
+    id: g.game, name: g.name, scene: g.scene, bestKey: g.bestKey, game: g.game, key: null, label: '•', wap: true, isNew: g.isNew
+  }));
+  return [
+    ...games,
+    ...wap,
+    { id: 'pet', name: 'Pocket Pet', scene: 'PetScene', pet: true, key: null, label: '♥' },
+    { id: 'wap', name: 'WAP Downloads', scene: 'WapScene', wapHub: true, key: null, label: '@' },
+    { id: 'share', name: 'Share score', scene: 'ShareScene', share: true, key: null, label: '»' },
+    { id: 'inbox', name: 'Messages', scene: 'InboxScene', inbox: true, key: '7', label: '7' },
+    { id: 'settings', name: 'Settings', scene: 'SettingsScene', settings: true, key: '8', label: '8' }
+  ];
+}
+const MOOD_WORD = { idle: 'Chill', blink: 'Chill', happy: 'Happy', eating: 'Eating', sleepy: 'Sleepy', grumpy: 'Grumpy', sick: 'Sick' };
 
 const LIST_TOP = 60;
 const ROW_H = 60;
@@ -51,6 +65,7 @@ export default class MenuScene extends Phaser.Scene {
 
   init(data) {
     this.startIndex = data && Number.isInteger(data.index) ? data.index : 0;
+    this.startItem = data && data.item ? data.item : null;
   }
 
   create() {
@@ -58,6 +73,8 @@ export default class MenuScene extends Phaser.Scene {
     this.scroll = 0;
     this.fromDigit = false;
     this.code = null;
+    this.items = buildMenuItems();
+    const ITEMS = this.items;
     const pal = getSkin().palette;
     const mono = (size, color) => ({ fontSize: size, color, fontFamily: 'monospace', fontStyle: 'bold' });
     this.mono = mono;
@@ -74,7 +91,7 @@ export default class MenuScene extends Phaser.Scene {
     // List
     this.rows = ITEMS.map((item, i) => {
       const bg = this.add.rectangle(180, 0, 336, 52, hexToInt(pal.panel)).setInteractive({ useHandCursor: true });
-      const num = this.add.text(30, 0, String(i + 1), mono('21px', pal.fg)).setOrigin(0, 0.5);
+      const num = this.add.text(30, 0, item.label, mono('21px', pal.fg)).setOrigin(0, 0.5);
       const label = this.add.text(60, 0, item.name, mono('17px', pal.text)).setOrigin(0, 0.5);
       const badge = this.add.text(334, 0, '', mono('14px', pal.warn)).setOrigin(1, 0.5);
       bg.on('pointerdown', () => {
@@ -133,7 +150,39 @@ export default class MenuScene extends Phaser.Scene {
     });
 
     this.perkLine.setText(`${getSkin().brand} perk: ${currentPerk().name}`);
-    this.select(Phaser.Math.Clamp(this.startIndex, 0, ITEMS.length - 1));
+    const fromItem = this.startItem ? ITEMS.findIndex((it) => it.id === this.startItem) : -1;
+    this.select(fromItem >= 0 ? fromItem : Phaser.Math.Clamp(this.startIndex, 0, ITEMS.length - 1));
+
+    // Pocket pet peeking out bottom-right
+    this.peekG = this.add.graphics().setDepth(5);
+    this.peekFrame = 0;
+    this.peekZ = this.add.text(352, 368, '', mono('11px', pal.accent)).setOrigin(1, 0.5).setDepth(5);
+    this.time.addEvent({ delay: 300, loop: true, callback: () => { this.peekFrame += 1; this.drawPeek(); } });
+    const unsubPet = Pet.onPetChange(() => { this.drawPeek(); this.refreshBadges(); });
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, unsubPet);
+    this.drawPeek();
+  }
+
+  drawPeek() {
+    if (!this.peekG || !this.peekG.active) return;
+    const pal = getSkin().palette;
+    const s = Pet.state();
+    const g = this.peekG;
+    g.clear();
+    const sel = this.items[this.index] && this.items[this.index].pet;
+    let mood = s.mood;
+    if (sel && mood === 'idle') mood = 'happy';
+    if (mood === 'idle' && this.peekFrame % 12 === 0) mood = 'blink';
+    const scale = 2;
+    const rows = { 0: 12, 1: 11, 2: 14, 3: 17 }[s.stage];
+    const cols = { 0: 10, 1: 12, 2: 14, 3: 16 }[s.stage];
+    const bob = mood === 'sleepy' ? 0 : (this.peekFrame % 4 < 2 ? 0 : -1);
+    const x = 354 - cols * scale;
+    const y = 414 - rows * scale + bob;
+    drawPet((rx, ry, rw, rh, c) => { g.fillStyle(hexToInt(c), 1); g.fillRect(rx, ry, rw, rh); },
+      { stage: s.stage, mood, frame: this.peekFrame, scale, x, y, pal });
+    this.peekZ.setPosition(354, y - 6).setText(mood === 'sleepy' ? ['z', 'zZ', 'zZz'][this.peekFrame % 3] : (mood === 'grumpy' || mood === 'sick') ? '!' : '');
+    this.peekState = { stage: s.stage, mood, x, y };
   }
 
   // ---- Secret code entry ---------------------------------------------------
@@ -309,8 +358,8 @@ export default class MenuScene extends Phaser.Scene {
       this.refreshSound();
       return;
     }
-    const i = Number(d) - 1;
-    if (i >= 0 && i < ITEMS.length) {
+    const i = this.items.findIndex((it) => it.key === d);
+    if (i >= 0) {
       this.select(i);
       this.launch();
     }
@@ -350,10 +399,13 @@ export default class MenuScene extends Phaser.Scene {
     const dare = Sms.getDare();
     const unread = Sms.unreadCount();
     this.rows.forEach((row, j) => {
-      const item = ITEMS[j];
+      const item = this.items[j];
       let badge = '';
       if (item.inbox) badge = unread > 0 ? `${unread} new` : '';
       else if (item.settings) badge = `★${Eggs.foundCount()}/${Eggs.totalCount()}`;
+      else if (item.wapHub) { const n = Wap.readyCount(); badge = n ? `${n} GET` : ''; }
+      else if (item.pet) { const m = Pet.mood(); badge = m === 'grumpy' || m === 'sick' ? '!' : Pet.isAsleep() ? 'Zz' : ''; }
+      else if (item.wap && item.isNew) badge = 'NEW';
       else if (dare && dare.today && !dare.done && dare.game === item.game) badge = 'DARE';
       row.badge.setText(badge);
     });
@@ -361,7 +413,7 @@ export default class MenuScene extends Phaser.Scene {
   }
 
   layoutRows() {
-    const maxScroll = Math.max(0, ITEMS.length - VISIBLE);
+    const maxScroll = Math.max(0, this.items.length - VISIBLE);
     this.scroll = Phaser.Math.Clamp(this.scroll, 0, maxScroll);
     this.rows.forEach((row, j) => {
       const visible = j >= this.scroll && j < this.scroll + VISIBLE;
@@ -383,7 +435,8 @@ export default class MenuScene extends Phaser.Scene {
 
   select(i) {
     const pal = getSkin().palette;
-    const next = (i + ITEMS.length) % ITEMS.length;
+    const n = this.items.length;
+    const next = (i + n) % n;
     const changed = next !== this.index;
     if (changed && this.index !== -1) Sfx.menuMove();
     this.index = next;
@@ -396,13 +449,30 @@ export default class MenuScene extends Phaser.Scene {
       row.label.setColor(on ? pal.bg : pal.text);
       row.badge.setColor(on ? pal.bg : pal.warn);
     });
-    this.counter.setText(`${this.index + 1}/${ITEMS.length}`);
+    this.counter.setText(`${this.index + 1}/${n}`);
     this.refreshBadges();
+    if (changed) this.drawPeek && this.peekG && this.drawPeek();
   }
 
   updateInfo() {
-    const item = ITEMS[this.index];
+    const item = this.items[this.index];
     if (!item || !this.info) return;
+    if (item.pet) {
+      const p = Pet.state();
+      this.info.setText(p.stage === 0 ? 'An egg! Play to hatch it' : `${p.name}: ${MOOD_WORD[p.mood] || 'Chill'} · Food ${Math.round(p.food)}%`);
+      return;
+    }
+    if (item.wapHub) {
+      const all = Wap.list();
+      const ready = all.filter((c) => c.status === 'ready').length;
+      const got = all.filter((c) => c.status === 'installed').length;
+      this.info.setText(ready ? `${ready} ready to download!` : got ? `${got} downloaded · more soon` : 'Games over the air');
+      return;
+    }
+    if (item.share) {
+      this.info.setText('Make a score card PNG');
+      return;
+    }
     if (item.inbox) {
       const n = Sms.list().length;
       const u = Sms.unreadCount();
@@ -423,8 +493,9 @@ export default class MenuScene extends Phaser.Scene {
   }
 
   launch() {
-    const item = ITEMS[this.index];
+    const item = this.items[this.index];
     if (!item || !item.scene) return;
+    if (item.wap) Wap.markPlayed(item.id);
     Sfx.menuSelect();
     this.scene.start(item.scene);
   }
@@ -436,4 +507,4 @@ export default class MenuScene extends Phaser.Scene {
   }
 }
 
-export { ITEMS as MENU_ITEMS, INBOX_INDEX };
+export { buildMenuItems as MENU_ITEMS };

@@ -16,7 +16,6 @@ import * as Power from '../phone/Power.js';
  * Power off (same as holding the red C key / Esc / End).
  */
 
-const MENU_SETTINGS_INDEX = 7;
 const ROWS = ['sound', 'music', 'calls', 'codebook', 'power'];
 const TOP = 66;
 const ROW_H = 56;
@@ -132,6 +131,6 @@ export default class SettingsScene extends Phaser.Scene {
 
   back() {
     Sfx.back();
-    this.scene.start('MenuScene', { index: MENU_SETTINGS_INDEX });
+    this.scene.start('MenuScene', { item: 'settings' });
   }
 }

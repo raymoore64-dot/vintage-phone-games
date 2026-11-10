@@ -14,6 +14,7 @@
  *   PIXEL   74935    next run: fat 3x3 pixels
  *   CREDITS 2733487  roll the credits
  *   LOL     565      someone texts you back...
+ *   TONES   86637    WAP code: lets you download Ring Rhythm (batch B)
  *
  * The 4-digit *-codes (*7283, *2288) still work and are listed in the
  * code book too. Found eggs persist in localStorage 'vpg.eggs'.
@@ -38,7 +39,8 @@ export const EGGS = [
   { id: 'flip', word: 'FLIP', name: 'Upside down', desc: 'Next run is upside down', kind: 'run' },
   { id: 'pixel', word: 'PIXEL', name: 'Fat pixels', desc: 'Next run in chunky low-res', kind: 'run' },
   { id: 'credits', word: 'CREDITS', name: 'Credits', desc: 'Roll the credits', kind: 'now' },
-  { id: 'lol', word: 'LOL', name: 'LOL', desc: 'Someone texts you back...', kind: 'now' }
+  { id: 'lol', word: 'LOL', name: 'LOL', desc: 'Someone texts you back...', kind: 'now' },
+  { id: 'tones', word: 'TONES', name: 'WAP code', desc: 'Unlocks Ring Rhythm on WAP', kind: 'wap' }
 ].map((e) => ({ ...e, digits: t9(e.word) }));
 
 // The existing *-codes, shown in the code book as well
@@ -142,6 +144,8 @@ export function trigger(id) {
   } else if (id === 'credits') {
     scene = 'CreditsScene';
     message = 'Rolling credits...';
+  } else if (id === 'tones') {
+    message = 'WAP code OK: Ring Rhythm';
   } else if (id === 'lol') {
     Sms.queueText('unknown', EGG_TEXTS.lol, { egg: 'lol' });
     Sms.queueText('dex', EGG_TEXTS.lolFollow, { egg: 'lol' });

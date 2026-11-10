@@ -20,7 +20,6 @@ const ROW_H = 62;
 const VISIBLE = 6;
 const BODY_TOP = 86;
 const BODY_BOTTOM = 384;
-const MENU_INBOX_INDEX = 6;
 
 export default class InboxScene extends Phaser.Scene {
   constructor() {
@@ -127,7 +126,7 @@ export default class InboxScene extends Phaser.Scene {
       this.draw();
       return;
     }
-    this.scene.start('MenuScene', { index: MENU_INBOX_INDEX });
+    this.scene.start('MenuScene', { item: 'inbox' });
   }
 
   open(msg) {

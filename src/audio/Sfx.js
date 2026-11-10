@@ -124,6 +124,20 @@ const PHRASES = {
   boot_volta:      { notes: [{ f: 220, d: 0.05 }, { f: 440, d: 0.05 }, { f: 880, d: 0.05 }, { f: 330, d: 0.05 }, { f: 660, d: 0.05 }, { f: 1320, d: 0.05 }, { f: 990, d: 0.24 }], gain: 0.13, type: 'square' },
   boot_proto:      { notes: [{ f: 1200, d: 0.04 }, { f: 300, d: 0.04 }, { f: 900, d: 0.06 }, { f: 450, d: 0.04 }, { f: 1300, d: 0.06 }, { f: 600, d: 0.04 }, { f: 1100, d: 0.28 }], gain: 0.12, type: 'pulse' },
 
+  // ---- Batch B: pocket pet, WAP downloads, share card ----
+  petBlip:         { notes: [{ f: 1047, d: 0.03 }, { f: 1319, d: 0.04 }], gain: 0.1, type: 'square' },
+  petHappy:        { notes: [{ f: 880, d: 0.05 }, { f: 1175, d: 0.05 }, { f: 1397, d: 0.08 }], gain: 0.11, type: 'pulse' },
+  petEat:          { notes: [{ f: 330, d: 0.04, gap: 0.05 }, { f: 392, d: 0.04, gap: 0.05 }, { f: 330, d: 0.04 }], gain: 0.11, type: 'square' },
+  petWin:          { notes: [{ f: 784, d: 0.06 }, { f: 988, d: 0.06 }, { f: 1175, d: 0.06 }, { f: 1397, d: 0.14 }], gain: 0.12, type: 'pulse' },
+  petLose:         { notes: [{ f: 392, d: 0.08 }, { f: 330, d: 0.14 }], gain: 0.11, type: 'square' },
+  petGrumpy:       { notes: [{ f: 196, d: 0.07 }, { f: 185, d: 0.12 }], gain: 0.11, type: 'square' },
+  petEvolve:       { notes: [{ f: 523, d: 0.06 }, { f: 659, d: 0.06 }, { f: 784, d: 0.06 }, { f: 1047, d: 0.06 }, { f: 784, d: 0.06 }, { f: 1047, d: 0.06 }, { f: 1319, d: 0.24 }], gain: 0.13, type: 'pulse' },
+  wapConnect:      { notes: [{ f: 1200, d: 0.12 }, { f: 1380, d: 0.08 }, { f: 980, d: 0.1 }, { f: 1300, d: 0.06 }, { f: 600, d: 0.14 }, { f: 1250, d: 0.2 }], gain: 0.09, type: 'square' },
+  wapTick:         { notes: [{ f: 1400, d: 0.02 }], gain: 0.06, type: 'square' },
+  wapDone:         { notes: [{ f: 659, d: 0.07 }, { f: 784, d: 0.07 }, { f: 988, d: 0.07 }, { f: 1319, d: 0.1, gap: 0.06 }, { f: 1175, d: 0.07 }, { f: 1319, d: 0.24 }], gain: 0.13, type: 'square' },
+  wapFail:         { notes: [{ f: 300, d: 0.12, gap: 0.05 }, { f: 220, d: 0.2 }], gain: 0.12, type: 'square' },
+  shareSnap:       { notes: [{ f: 1319, d: 0.03 }, { f: 988, d: 0.05 }], gain: 0.11, type: 'square' },
+
   // One ring cycle each; Calls.js repeats them while the phone rings
   ring_mum:        { notes: [{ f: 880, d: 0.05, gap: 0.01 }, { f: 1047, d: 0.05, gap: 0.01 }, { f: 880, d: 0.05, gap: 0.01 }, { f: 1047, d: 0.05, gap: 0.01 }, { f: 880, d: 0.05, gap: 0.01 }, { f: 1047, d: 0.05, gap: 0.01 }, { f: 880, d: 0.05, gap: 0.01 }, { f: 1047, d: 0.05 }], gain: 0.12, type: 'square' },
   ring_dex:        { notes: [{ f: 659, d: 0.09 }, { f: 659, d: 0.09 }, { f: 784, d: 0.09 }, { f: 659, d: 0.09 }, { f: 587, d: 0.09 }, { f: 523, d: 0.18 }], gain: 0.13, type: 'square' },

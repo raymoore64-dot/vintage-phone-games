@@ -96,6 +96,12 @@ export function repair(id = getSkin().id) {
   return condition(id);
 }
 
+/** Marks for a phone (used by the share card). */
+export function marksFor(id = getSkin().id) {
+  const lv = levelFor(playSeconds(id));
+  return { level: lv, marks: lv.marks.slice(), hash: hash(id) };
+}
+
 function hash(str) {
   let h = 2166136261;
   for (let i = 0; i < str.length; i++) {
@@ -203,4 +209,4 @@ export function initWear() {
   };
 }
 
-export default { initWear, condition, repair, playSeconds, levelFor, formatPlaytime, LEVELS, apply };
+export default { initWear, marksFor, condition, repair, playSeconds, levelFor, formatPlaytime, LEVELS, apply };

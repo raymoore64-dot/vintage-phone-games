@@ -27,6 +27,12 @@ import * as Phone from '../phone/Phone.js';
 import * as Sfx from '../audio/Sfx.js';
 import * as Eggs from '../phone/Eggs.js';
 import { attachCalls } from '../phone/Calls.js';
+import { bindPhoneInput } from '../input/PhoneInput.js';
+import * as Progress from '../progress/Progress.js';
+import * as Wap from '../wap/Wap.js';
+import * as Pet from '../pet/Pet.js';
+import { gameName, bestOf } from '../games.js';
+import { shareScore } from '../share/ScoreCard.js';
 
 const BASE = {
   speed: 1,
@@ -254,6 +260,9 @@ export function attachPerks(scene, gameId) {
     scene.time.delayedCall(2600, () => popText(scene, eggs.map((e) => names[e]).join(' '), 'warn'));
   }
   attachCalls(scene, gameId);
+  // Batch B: WAP games lose their NEW badge once played; game over offers '* share'
+  if (Wap.get(gameId)) Wap.markPlayed(gameId);
+  attachShareHook(scene, gameId);
 
   const onUpdate = () => {
     if (isFrozen(scene) || scene.alive === false) return;
@@ -300,6 +309,44 @@ export function attachPerks(scene, gameId) {
     points: (n, quiet = true) => perkPoints(scene, n, { quiet })
   };
   return r;
+}
+
+/*
+ * Game-over share prompt (batch B). When this run's score is reported,
+ * a strip at the bottom of the LCD offers '* share score'; pressing *
+ * renders the story card and shares / downloads it.
+ */
+function attachShareHook(scene, gameId) {
+  let info = null;
+  let busy = false;
+  const off = Progress.onRun((evt) => {
+    if (!evt || evt.kind !== 'run' || evt.gameId !== gameId) return;
+    if (!scene.sys || !scene.sys.isActive() || scene.alive !== false) return;
+    const pal = getSkin().palette;
+    const best = Math.max(bestOf(gameId), Number(evt.score) || 0);
+    info = { gameId, gameName: gameName(gameId), score: Number(evt.score) || 0, best, newBest: !!evt.newBest, format: 'story' };
+    const meal = Pet.state().lastMeal;
+    const pet = meal && Date.now() - meal.at < 3000 && Pet.stage() > 0 ? ` · ${Pet.name()} +${meal.food} food` : '';
+    scene.__shareStrip = scene.add.text(180, 458, `* share score${pet}`, {
+      fontSize: '14px', color: pal.bg, backgroundColor: pal.fg, fontFamily: 'monospace', fontStyle: 'bold', padding: { x: 8, y: 4 }
+    }).setOrigin(0.5).setDepth(990);
+  });
+  bindPhoneInput(scene, {
+    digit: (d) => {
+      if (d !== '*' || !info || busy) return;
+      busy = true;
+      Sfx.play('shareSnap');
+      if (scene.__shareStrip) scene.__shareStrip.setText('Preparing card...');
+      shareScore(info).then((res) => {
+        busy = false;
+        scene.__shareResult = res;
+        if (!scene.sys || !scene.sys.isActive() || !scene.__shareStrip) return;
+        const msg = { share: 'Shared!', download: 'Card saved (PNG)', cancelled: 'Share cancelled', failed: 'Could not share' }[res.method] || '';
+        scene.__shareStrip.setText(`${msg} · * again`);
+      });
+    }
+  });
+  scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { off(); scene.__shareStrip = null; });
 }
 
 export function publishPerks() {

@@ -23,10 +23,12 @@ import { isFrozen } from '../ui/PauseOverlay.js';
 import * as Lcd from './Lcd.js';
 import * as Secrets from './Secrets.js';
 import * as Sfx from '../audio/Sfx.js';
+import CARTRIDGES from '../wap/catalog.js';
 
 export const STORAGE_KEY = 'vpg.phone';
 export const GAME_SCENES = new Set([
-  'SnakeScene', 'BounceScene', 'ImpactScene', 'BricksScene', 'BlocksScene', 'SimonScene'
+  'SnakeScene', 'BounceScene', 'ImpactScene', 'BricksScene', 'BlocksScene', 'SimonScene',
+  ...CARTRIDGES.map((c) => c.scene)   // WAP download games count as play too
 ]);
 
 const DRAIN_PER_SEC = 20 / 180;      // 1 bar per 3 minutes of play

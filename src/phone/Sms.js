@@ -261,6 +261,10 @@ function pump(now) {
 
 // ---- Reading ---------------------------------------------------------------
 
+export function daresDone() {
+  return Number(st.daresDone) || 0;
+}
+
 export function list() {
   return st.inbox.slice();
 }
@@ -350,6 +354,6 @@ export function initSms() {
 }
 
 export default {
-  initSms, onChange, onMenu, onRunStart, queueText, list, get, unreadCount, pendingCount,
+  initSms, onChange, onMenu, onRunStart, queueText, daresDone, list, get, unreadCount, pendingCount,
   markRead, getDare, dareStatus, formatTime, today
 };

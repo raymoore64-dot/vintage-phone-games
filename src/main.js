@@ -17,6 +17,12 @@ import InboxScene from './scenes/InboxScene.js';
 import SettingsScene from './scenes/SettingsScene.js';
 import CodeBookScene from './scenes/CodeBookScene.js';
 import CreditsScene from './scenes/CreditsScene.js';
+import WapScene from './scenes/WapScene.js';
+import PetScene from './scenes/PetScene.js';
+import ShareScene from './scenes/ShareScene.js';
+import { initWap } from './wap/Wap.js';
+import { initPet } from './pet/Pet.js';
+import { publishShare } from './share/ScoreCard.js';
 import { initPower } from './phone/Power.js';
 import { initCalls } from './phone/Calls.js';
 import { initWear } from './phone/Wear.js';
@@ -54,7 +60,10 @@ const config = {
     SnakeScene, BounceScene, ImpactScene,
     BricksScene, BlocksScene, SimonScene,
     SkinScene, InboxScene,
-    SettingsScene, CodeBookScene, CreditsScene
+    SettingsScene, CodeBookScene, CreditsScene,
+    WapScene, PetScene, ShareScene
+    // Batch C: add HopperScene, FishingScene, RhythmScene, RallyScene here;
+    // the WAP catalogue (src/wap/catalog.js) then offers them for download.
   ],
   physics: {
     default: 'arcade',
@@ -77,6 +86,10 @@ initPower(game);
 initCalls();
 initWear();
 publishEggs();
+// Batch B: WAP download cartridges, pocket pet, share score card
+initWap(game);
+initPet();
+publishShare();
 window.__vpg = window.__vpg || {};
 window.__vpg.setSkin = (id) => setSkin(id).id;
 export default game;

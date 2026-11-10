@@ -11,6 +11,7 @@ export const CAST = {
   kaz: { name: 'Kaz', number: '07700 900345' },
   unknown: { name: 'Unknown', number: 'Withheld' },
   bank: { name: 'The Bank', number: '0808 157 0192' },
+  pet: { name: 'BLIP', number: 'Pocket pet' },
   network: { name: 'LINICRO Net', number: '121' }
 };
 
