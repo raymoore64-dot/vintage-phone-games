@@ -6,7 +6,7 @@
  * custom properties on .phone) and of the LCD colour palette that game
  * scenes paint with.
  *
- *   unlock  — reserved for future progression. true means already unlocked.
+ *   unlockAt — lifetime points needed to use this phone. 0 = already unlocked.
  */
 
 export const DEFAULT_SKIN_ID = 'linicro-1000';
@@ -23,7 +23,7 @@ export const SKINS = [
     brand: 'LINICRO',
     model: '1000',
     tagline: 'Chunky charcoal brick · green LCD',
-    unlock: true,
+    unlockAt: 0,
     css: {
       '--phone-width': '44',
       '--phone-pad-top': '2.5',
@@ -95,7 +95,7 @@ export const SKINS = [
     brand: 'PURPLEX',
     model: 'Grape',
     tagline: 'Translucent purple shell · amber LCD',
-    unlock: true,
+    unlockAt: 0,
     css: {
       '--phone-width': '46',
       '--phone-pad-top': '2.5',
@@ -167,7 +167,7 @@ export const SKINS = [
     brand: 'GLACIO',
     model: 'Ice',
     tagline: 'Silver candy-bar · blue backlight',
-    unlock: true,
+    unlockAt: 0,
     css: {
       '--phone-width': '42',
       '--phone-pad-top': '2.4',
@@ -239,7 +239,7 @@ export const SKINS = [
     brand: 'RUBYTEL',
     model: 'Cherry',
     tagline: 'Curved cherry-red shell · lime LCD',
-    unlock: true,
+    unlockAt: 0,
     css: {
       '--phone-width': '43',
       '--phone-pad-top': '2.5',
@@ -298,7 +298,296 @@ export const SKINS = [
       text: '#f4ffc8',
       panel: '#1e240c'
     }
+  },
+  // ------------------------------------------------------------------
+  // 5. SOLARA Sunburst
+  // A chunky late-90s "slider-ish" yellow-orange brick: wide body,
+  // flatter top, black keys, and a muted green-grey LCD.
+  // Unlocks at 500 lifetime points.
+  // ------------------------------------------------------------------
+  {
+    id: 'solara-sunburst',
+    name: 'Sunburst',
+    brand: 'SOLARA',
+    model: 'Sunburst',
+    tagline: 'Chunky yellow brick · green-grey LCD',
+    unlockAt: 500,
+    css: {
+      '--phone-width': '46',
+      '--phone-pad-top': '2.2',
+      '--phone-pad-side': '3.2',
+      '--phone-pad-bottom': '2.6',
+      '--phone-radius-tl': '3.5',
+      '--phone-radius-tr': '3.5',
+      '--phone-radius-br': '6',
+      '--phone-radius-bl': '6',
+      '--phone-bg': 'linear-gradient(180deg, #f6c44a 0%, #e89418 28%, #c05a0a 62%, #7a3208 100%)',
+      '--phone-highlight': 'rgba(255, 240, 180, 0.4)',
+      '--phone-inset-dark': 'rgba(80, 30, 0, 0.5)',
+      '--phone-drop': 'rgba(60, 20, 0, 0.65)',
+      '--phone-glow': 'rgba(240, 160, 20, 0.22)',
+      '--phone-shine': 'linear-gradient(180deg, rgba(255,255,220,0.40) 0%, rgba(255,200,80,0.10) 24%, transparent 48%)',
+      '--brand-color': '#3a1c00',
+      '--brand-tracking': '0.7',
+      '--brand-size': '1.9',
+      '--speaker-width': '14',
+      '--speaker-height': '0.9',
+      '--speaker-bg': 'repeating-linear-gradient(90deg, #2a1400 0 calc(var(--u) * 0.6), #8a5a10 calc(var(--u) * 0.6) calc(var(--u) * 1))',
+      '--screen-wrap-bg': '#2a1a08',
+      '--screen-wrap-pad': '1.3',
+      '--screen-wrap-radius': '1.2',
+      '--lcd-bg': '#141a14',
+      '--softbar-bg': '#141a14',
+      '--softbar-border': '#2a3a28',
+      '--softbar-fg': '#b0c8a8',
+      '--key-fg': '#e8e8e8',
+      '--key-bg': 'linear-gradient(#2a2a2a, #101010)',
+      '--key-radius': '0.9',
+      '--key-shadow': '#3a1c00',
+      '--key-sub-fg': '#8a8a8a',
+      '--call-bg': 'linear-gradient(#3d8f4a, #1e5a28)',
+      '--end-bg': 'linear-gradient(#8a2020, #4a1010)',
+      '--call-fg': '#e8ffe8',
+      '--end-fg': '#ffd0d0',
+      '--call-radius': '1.2',
+      '--dpad-size': '15',
+      '--dpad-radius': 'calc(var(--u) * 1.6)',
+      '--dpad-bg': 'radial-gradient(circle at 40% 35%, #3a3a3a, #101010)',
+      '--dir-fg': '#d0d0d0',
+      '--dir-active': '#b0c8a8',
+      '--ok-bg': 'linear-gradient(#3a3a3a, #181818)',
+      '--ok-fg': '#f0f0f0',
+      '--ok-active': '#b0c8a8',
+      '--ok-size': '5.4'
+    },
+    palette: {
+      bg: '#141a14',
+      fg: '#b0c8a8',
+      dim: '#5a6e58',
+      accent: '#8aaa80',
+      warn: '#e8c040',
+      danger: '#e05050',
+      text: '#e4f0dc',
+      panel: '#1c241c'
+    }
+  },
+
+  // ------------------------------------------------------------------
+  // 6. MINTRA Minty
+  // A soft pastel-mint candy-bar with white pill keys and a bright
+  // teal LCD. Unlocks at 1500 lifetime points.
+  // ------------------------------------------------------------------
+  {
+    id: 'mintra-minty',
+    name: 'Minty',
+    brand: 'MINTRA',
+    model: 'Minty',
+    tagline: 'Pastel mint shell · teal LCD',
+    unlockAt: 1500,
+    css: {
+      '--phone-width': '44',
+      '--phone-pad-top': '2.5',
+      '--phone-pad-side': '2.6',
+      '--phone-pad-bottom': '3',
+      '--phone-radius-tl': '9',
+      '--phone-radius-tr': '9',
+      '--phone-radius-br': '11',
+      '--phone-radius-bl': '11',
+      '--phone-bg': 'linear-gradient(160deg, #e8fff4, #a8e0c8 42%, #68b898 78%, #3e8a70)',
+      '--phone-highlight': 'rgba(255, 255, 255, 0.6)',
+      '--phone-inset-dark': 'rgba(20, 60, 50, 0.28)',
+      '--phone-drop': 'rgba(20, 50, 40, 0.45)',
+      '--phone-glow': 'rgba(120, 220, 190, 0.28)',
+      '--phone-shine': 'linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(220,255,240,0.16) 28%, transparent 50%)',
+      '--brand-color': '#1a5a48',
+      '--brand-tracking': '0.75',
+      '--brand-size': '1.8',
+      '--speaker-width': '9',
+      '--speaker-height': '1',
+      '--speaker-bg': 'repeating-linear-gradient(90deg, #1a4a3c 0 calc(var(--u) * 0.6), #8ac8b0 calc(var(--u) * 0.6) calc(var(--u) * 1))',
+      '--screen-wrap-bg': '#1a3a32',
+      '--screen-wrap-pad': '1.4',
+      '--screen-wrap-radius': '2.8',
+      '--lcd-bg': '#042018',
+      '--softbar-bg': '#042018',
+      '--softbar-border': '#145848',
+      '--softbar-fg': '#2ee0c0',
+      '--key-fg': '#1a3a30',
+      '--key-bg': 'linear-gradient(#ffffff, #d8ece4)',
+      '--key-radius': '2.5',
+      '--key-shadow': '#3a6a58',
+      '--key-sub-fg': '#4a7a6a',
+      '--call-bg': 'linear-gradient(#4ccc88, #2a8a58)',
+      '--end-bg': 'linear-gradient(#e87888, #a04050)',
+      '--call-fg': '#f4fff8',
+      '--end-fg': '#fff4f4',
+      '--call-radius': '2.5',
+      '--dpad-size': '15',
+      '--dpad-radius': '50%',
+      '--dpad-bg': 'radial-gradient(circle at 40% 35%, #ffffff, #90c8b4)',
+      '--dir-fg': '#1a3a30',
+      '--dir-active': '#0a7a60',
+      '--ok-bg': 'linear-gradient(#ffffff, #b8dcc8)',
+      '--ok-fg': '#1a3a30',
+      '--ok-active': '#0a7a60',
+      '--ok-size': '5.6'
+    },
+    palette: {
+      bg: '#042018',
+      fg: '#2ee0c0',
+      dim: '#1a6a5c',
+      accent: '#5ad4b8',
+      warn: '#ffcc55',
+      danger: '#ff5a7a',
+      text: '#d8fff4',
+      panel: '#0a2c24'
+    }
+  },
+
+  // ------------------------------------------------------------------
+  // 7. AURUM Executive
+  // A slim matte-black / gunmetal business phone with gold keys and a
+  // gold-amber LCD. Unlocks at 3500 lifetime points.
+  // ------------------------------------------------------------------
+  {
+    id: 'aurum-executive',
+    name: 'Executive',
+    brand: 'AURUM',
+    model: 'Executive',
+    tagline: 'Gunmetal slim · gold keys · amber LCD',
+    unlockAt: 3500,
+    css: {
+      '--phone-width': '40',
+      '--phone-pad-top': '2.3',
+      '--phone-pad-side': '1.6',
+      '--phone-pad-bottom': '2.6',
+      '--phone-radius-tl': '2.2',
+      '--phone-radius-tr': '2.2',
+      '--phone-radius-br': '2.4',
+      '--phone-radius-bl': '2.4',
+      '--phone-bg': 'linear-gradient(160deg, #3a3d42, #1c1e22 50%, #0c0d10)',
+      '--phone-highlight': 'rgba(220, 200, 150, 0.12)',
+      '--phone-inset-dark': 'rgba(0, 0, 0, 0.65)',
+      '--phone-drop': 'rgba(0, 0, 0, 0.75)',
+      '--phone-glow': 'rgba(200, 160, 60, 0.12)',
+      '--phone-shine': 'linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(200,180,120,0.04) 26%, transparent 48%)',
+      '--brand-color': '#d4b45a',
+      '--brand-tracking': '0.9',
+      '--brand-size': '1.6',
+      '--speaker-width': '12',
+      '--speaker-height': '0.7',
+      '--speaker-bg': 'repeating-linear-gradient(90deg, #0a0a0a 0 calc(var(--u) * 0.6), #4a4430 calc(var(--u) * 0.6) calc(var(--u) * 1))',
+      '--screen-wrap-bg': '#0a0a0c',
+      '--screen-wrap-pad': '1.1',
+      '--screen-wrap-radius': '0.8',
+      '--lcd-bg': '#161208',
+      '--softbar-bg': '#161208',
+      '--softbar-border': '#4a3810',
+      '--softbar-fg': '#f5c400',
+      '--key-fg': '#2a1c08',
+      '--key-bg': 'linear-gradient(#e8d48a, #b89440)',
+      '--key-radius': '0.5',
+      '--key-shadow': '#0a0a0a',
+      '--key-sub-fg': '#6a5420',
+      '--call-bg': 'linear-gradient(#3a8a58, #1a4a30)',
+      '--end-bg': 'linear-gradient(#8a3030, #4a1010)',
+      '--call-fg': '#f0ffe8',
+      '--end-fg': '#ffd8d8',
+      '--call-radius': '0.5',
+      '--dpad-size': '14.5',
+      '--dpad-radius': 'calc(var(--u) * 1.1)',
+      '--dpad-bg': 'radial-gradient(circle at 40% 35%, #4a4e54, #16181c)',
+      '--dir-fg': '#d4b45a',
+      '--dir-active': '#f5c400',
+      '--ok-bg': 'linear-gradient(#e8d48a, #a07830)',
+      '--ok-fg': '#2a1c08',
+      '--ok-active': '#6a4a08',
+      '--ok-size': '5.2'
+    },
+    palette: {
+      bg: '#161208',
+      fg: '#f5c400',
+      dim: '#8a7020',
+      accent: '#c8a040',
+      warn: '#ffee66',
+      danger: '#ff4a4a',
+      text: '#ffe9a0',
+      panel: '#201808'
+    }
+  },
+
+  // ------------------------------------------------------------------
+  // 8. VOLTA Neon
+  // A translucent teal / cyan jelly phone with magenta keys and a
+  // pink-magenta LCD. Unlocks at 7000 lifetime points.
+  // ------------------------------------------------------------------
+  {
+    id: 'volta-neon',
+    name: 'Neon',
+    brand: 'VOLTA',
+    model: 'Neon',
+    tagline: 'Translucent teal shell · magenta LCD',
+    unlockAt: 7000,
+    css: {
+      '--phone-width': '45',
+      '--phone-pad-top': '2.4',
+      '--phone-pad-side': '2.8',
+      '--phone-pad-bottom': '3',
+      '--phone-radius-tl': '8',
+      '--phone-radius-tr': '8',
+      '--phone-radius-br': '10',
+      '--phone-radius-bl': '10',
+      '--phone-bg': 'linear-gradient(160deg, rgba(80, 240, 230, 0.92), rgba(20, 140, 150, 0.95) 50%, #044048)',
+      '--phone-highlight': 'rgba(200, 255, 255, 0.4)',
+      '--phone-inset-dark': 'rgba(0, 40, 50, 0.45)',
+      '--phone-drop': 'rgba(0, 40, 50, 0.6)',
+      '--phone-glow': 'rgba(40, 220, 220, 0.4)',
+      '--phone-shine': 'linear-gradient(180deg, rgba(255,255,255,0.38) 0%, rgba(160,255,255,0.12) 30%, transparent 54%)',
+      '--brand-color': '#ffd0f0',
+      '--brand-tracking': '0.8',
+      '--brand-size': '1.85',
+      '--speaker-width': '9',
+      '--speaker-height': '1',
+      '--speaker-bg': 'repeating-linear-gradient(90deg, #042028 0 calc(var(--u) * 0.6), #208088 calc(var(--u) * 0.6) calc(var(--u) * 1))',
+      '--screen-wrap-bg': '#140818',
+      '--screen-wrap-pad': '1.4',
+      '--screen-wrap-radius': '2.4',
+      '--lcd-bg': '#180814',
+      '--softbar-bg': '#180814',
+      '--softbar-border': '#5a1848',
+      '--softbar-fg': '#ff64c8',
+      '--key-fg': '#fff0f8',
+      '--key-bg': 'linear-gradient(#ff50b0, #a01860)',
+      '--key-radius': '2.2',
+      '--key-shadow': '#042028',
+      '--key-sub-fg': '#ffb0d8',
+      '--call-bg': 'linear-gradient(#30d0a0, #148060)',
+      '--end-bg': 'linear-gradient(#ff3870, #8a1040)',
+      '--call-fg': '#f0fff8',
+      '--end-fg': '#ffe8f0',
+      '--call-radius': '2.2',
+      '--dpad-size': '15',
+      '--dpad-radius': '50%',
+      '--dpad-bg': 'radial-gradient(circle at 40% 35%, #40d8d8, #0a4850)',
+      '--dir-fg': '#f0ffff',
+      '--dir-active': '#ff64c8',
+      '--ok-bg': 'linear-gradient(#ff70c0, #c02070)',
+      '--ok-fg': '#fff8fc',
+      '--ok-active': '#ffe0f0',
+      '--ok-size': '5.6'
+    },
+    palette: {
+      bg: '#180814',
+      fg: '#ff64c8',
+      dim: '#8a3068',
+      accent: '#ff90d8',
+      warn: '#ffd24a',
+      danger: '#ff4060',
+      text: '#ffd8f0',
+      panel: '#241018'
+    }
   }
+
 ];
 
 export default SKINS;

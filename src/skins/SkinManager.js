@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import SKINS, { DEFAULT_SKIN_ID, getSkinById, skinIndex } from './skins.js';
+import { isUnlocked } from '../progress/Progress.js';
 
 export const STORAGE_KEY = 'vpg.skin';
 
@@ -8,7 +9,7 @@ const bus = new Phaser.Events.EventEmitter();
 function readStoredId() {
   try {
     const id = localStorage.getItem(STORAGE_KEY);
-    if (id && SKINS.some((s) => s.id === id)) return id;
+    if (id && SKINS.some((s) => s.id === id) && isUnlocked(id)) return id;
   } catch {
     // private mode / blocked storage — fall through to the default
   }
@@ -43,6 +44,7 @@ class SkinManager {
    */
   setSkin(id, { persist = true } = {}) {
     const skin = getSkinById(id);
+    if (!isUnlocked(skin)) return this.getSkin();
     this._id = skin.id;
     if (persist) writeStoredId(skin.id);
     this.applySkin();

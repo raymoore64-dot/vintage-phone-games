@@ -6,6 +6,9 @@ import MenuScene from './scenes/MenuScene.js';
 import SnakeScene from './scenes/SnakeScene.js';
 import BounceScene from './scenes/BounceScene.js';
 import ImpactScene from './scenes/ImpactScene.js';
+import BricksScene from './scenes/BricksScene.js';
+import BlocksScene from './scenes/BlocksScene.js';
+import SimonScene from './scenes/SimonScene.js';
 import SkinScene from './scenes/SkinScene.js';
 
 // Wire up the on-screen keypad and the physical keyboard
@@ -25,12 +28,18 @@ const config = {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH
   },
-  scene: [BootScene, MenuScene, SnakeScene, BounceScene, ImpactScene, SkinScene],
+  scene: [
+    BootScene, MenuScene,
+    SnakeScene, BounceScene, ImpactScene,
+    BricksScene, BlocksScene, SimonScene,
+    SkinScene
+  ],
   physics: {
     default: 'arcade',
     arcade: { debug: false }
   }
 };
 
-new Phaser.Game(config);
-
+const game = new Phaser.Game(config);
+window.__vpgGame = game;
+export default game;

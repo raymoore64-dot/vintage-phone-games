@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { bindPhoneInput, isHeld, setSoftKeys } from '../input/PhoneInput.js';
 import { hexToInt, shadeHex } from '../skins/skins.js';
 import { getSkin } from '../skins/SkinManager.js';
+import { addScore, formatUnlockLine } from '../progress/Progress.js';
 
 // ---- Tuning -------------------------------------------------------------
 const W = 360;
@@ -660,14 +661,19 @@ export default class ImpactScene extends Phaser.Scene {
       this.bestText.setText(`Best: ${this.best}`);
     }
 
-    this.add.rectangle(180, 270, 300, 220, 0x000000, 0.8).setStrokeStyle(2, pal.fg);
-    const style = (size, color) => ({ fontSize: size, color, fontFamily: 'monospace', align: 'center' });
+    const unlockMsg = formatUnlockLine(addScore('impact', this.score));
+
+    this.add.rectangle(180, 270, 300, unlockMsg ? 240 : 220, 0x000000, 0.8).setStrokeStyle(2, pal.fg);
+    const style = (size, color) => ({ fontSize: size, color, fontFamily: 'monospace', align: 'center', wordWrap: { width: 280 } });
     this.add.text(180, 200, 'GAME OVER', style('34px', pal.css.danger)).setOrigin(0.5);
     this.add.text(180, 240, reason, style('15px', pal.css.accent)).setOrigin(0.5);
     this.add.text(180, 280, `Score: ${this.score}`, style('22px', pal.css.text)).setOrigin(0.5);
     this.add.text(180, 310, newBest ? 'NEW BEST!' : `Best: ${this.best}`,
       style('16px', newBest ? pal.css.warn : pal.css.accent)).setOrigin(0.5);
-    this.add.text(180, 355, 'Tap or OK to retry', style('15px', pal.css.fg)).setOrigin(0.5);
+    if (unlockMsg) {
+      this.add.text(180, 338, unlockMsg, style('13px', pal.css.warn)).setOrigin(0.5);
+    }
+    this.add.text(180, unlockMsg ? 368 : 355, 'Tap or OK to retry', style('15px', pal.css.fg)).setOrigin(0.5);
 
     this.time.delayedCall(400, () => {
       this.canRestart = true;
