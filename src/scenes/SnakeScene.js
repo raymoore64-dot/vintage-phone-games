@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import { bindPhoneInput, setSoftKeys } from '../input/PhoneInput.js';
+import { hexToInt, shadeHex } from '../skins/skins.js';
+import { getSkin } from '../skins/SkinManager.js';
 
 // ---- Tuning -------------------------------------------------------------
 const GRID = 20;            // cell size in px
@@ -26,6 +28,22 @@ export default class SnakeScene extends Phaser.Scene {
   }
 
   create() {
+    const pal = getSkin().palette;
+    this.pal = {
+      bg: hexToInt(pal.bg),
+      fg: hexToInt(pal.fg),
+      body: shadeHex(pal.fg, 0.72),
+      dim: hexToInt(pal.dim),
+      accent: hexToInt(pal.accent),
+      warn: hexToInt(pal.warn),
+      danger: hexToInt(pal.danger),
+      text: hexToInt(pal.text),
+      panel: hexToInt(pal.panel),
+      solidOuter: shadeHex(pal.accent, 0.9),
+      solidInner: shadeHex(pal.dim, 0.7),
+      css: pal
+    };
+
     this.snake = [{ x: 9, y: 12 }, { x: 8, y: 12 }, { x: 7, y: 12 }];
     this.direction = { x: 1, y: 0 };
     this.dirQueue = [];
@@ -39,14 +57,15 @@ export default class SnakeScene extends Phaser.Scene {
     this.shedReadyAt = 0;
     this.food = this.spawnFood();
 
+    this.cameras.main.setBackgroundColor(this.pal.bg);
     this.graphics = this.add.graphics();
 
     // ---- HUD ----
     this.scoreText = this.add.text(8, 0, 'Score: 0', {
-      fontSize: '18px', color: '#00ff88', fontFamily: 'monospace'
+      fontSize: '18px', color: pal.fg, fontFamily: 'monospace'
     });
     this.bestText = this.add.text(352, 0, `Best: ${this.best}`, {
-      fontSize: '18px', color: '#88aa99', fontFamily: 'monospace'
+      fontSize: '18px', color: pal.accent, fontFamily: 'monospace'
     }).setOrigin(1, 0);
 
     // ---- Phone keypad + keyboard (arrows/WASD, keypad 2/4/6/8, OK/5 or left soft key = shed) ----
@@ -174,7 +193,7 @@ export default class SnakeScene extends Phaser.Scene {
       const gain = 10 + bonus;
       this.score += gain;
       this.scoreText.setText(`Score: ${this.score}`);
-      this.floatText(head, bonus > 0 ? `+${gain}!` : `+${gain}`, bonus > 0 ? '#ffcc33' : '#ffffff');
+      this.floatText(head, bonus > 0 ? `+${gain}!` : `+${gain}`, bonus > 0 ? this.pal.css.warn : this.pal.css.text);
       this.food = this.spawnFood();
       this.moveInterval = Math.max(MIN_INTERVAL, this.moveInterval - 3);
     } else {
@@ -202,11 +221,11 @@ export default class SnakeScene extends Phaser.Scene {
     const head = this.snake[0];
 
     if (now < this.shedReadyAt) {
-      this.floatText(head, 'Recharging', '#888888');
+      this.floatText(head, 'Recharging', this.pal.css.dim);
       return;
     }
     if (this.snake.length < SHED_MIN_LEN) {
-      this.floatText(head, 'Too short', '#888888');
+      this.floatText(head, 'Too short', this.pal.css.dim);
       return;
     }
 
@@ -214,7 +233,7 @@ export default class SnakeScene extends Phaser.Scene {
     dropped.forEach((c) => this.addTrail(c, now - GLOW_MS + SHED_GRACE));
     this.shedReadyAt = now + SHED_COOLDOWN;
     this.cameras.main.shake(80, 0.004);
-    this.floatText(head, 'SHED!', '#66ccff');
+    this.floatText(head, 'SHED!', this.pal.css.accent);
   }
 
   updateShedButton() {
@@ -259,10 +278,11 @@ export default class SnakeScene extends Phaser.Scene {
   draw() {
     const g = this.graphics;
     const now = this.time.now;
+    const pal = this.pal;
     g.clear();
 
     // Board
-    g.fillStyle(0x0d1a12, 1);
+    g.fillStyle(pal.bg, 1);
     g.fillRect(0, TOP * GRID, COLS * GRID, (ROWS - TOP) * GRID);
 
     // Trail
@@ -274,28 +294,28 @@ export default class SnakeScene extends Phaser.Scene {
         // Glowing: pulses faster as it's about to harden
         const p = age / GLOW_MS;
         const pulse = 0.5 + 0.5 * Math.sin(now / (120 - 80 * p));
-        g.fillStyle(0xffaa00, 0.15 + 0.35 * p * pulse + 0.1);
+        g.fillStyle(pal.warn, 0.15 + 0.35 * p * pulse + 0.1);
         g.fillRect(px + 3, py + 3, GRID - 6, GRID - 6);
       } else {
         // Solid wall: fades out in its last second
         const remaining = GLOW_MS + SOLID_MS - age;
         const alpha = remaining < 1000 ? 0.3 + 0.7 * (remaining / 1000) : 1;
-        g.fillStyle(0x7a8a99, alpha);
+        g.fillStyle(pal.solidOuter, alpha);
         g.fillRect(px + 1, py + 1, GRID - 2, GRID - 2);
-        g.fillStyle(0x4a5866, alpha);
+        g.fillStyle(pal.solidInner, alpha);
         g.fillRect(px + 4, py + 4, GRID - 8, GRID - 8);
       }
     });
 
     // Snake
     this.snake.forEach((s, i) => {
-      g.fillStyle(i === 0 ? 0x00ff66 : 0x00cc55, 1);
+      g.fillStyle(i === 0 ? pal.fg : pal.body, 1);
       g.fillRect(s.x * GRID + 1, s.y * GRID + 1, GRID - 2, GRID - 2);
     });
 
     // Food (gentle pulse)
     const r = GRID / 2 - 3 + Math.sin(now / 150) * 1.5;
-    g.fillStyle(0xff4444, 1);
+    g.fillStyle(pal.danger, 1);
     g.fillCircle(this.food.x * GRID + GRID / 2, this.food.y * GRID + GRID / 2, r);
   }
 
@@ -304,6 +324,7 @@ export default class SnakeScene extends Phaser.Scene {
     this.alive = false;
     setSoftKeys('Retry', 'Menu');
     this.cameras.main.shake(200, 0.01);
+    const pal = this.pal;
 
     const newBest = this.score > this.best;
     if (newBest) {
@@ -312,14 +333,14 @@ export default class SnakeScene extends Phaser.Scene {
       this.bestText.setText(`Best: ${this.best}`);
     }
 
-    this.add.rectangle(180, 270, 300, 220, 0x000000, 0.8).setStrokeStyle(2, 0x00ff88);
+    this.add.rectangle(180, 270, 300, 220, 0x000000, 0.8).setStrokeStyle(2, pal.fg);
     const style = (size, color) => ({ fontSize: size, color, fontFamily: 'monospace', align: 'center' });
-    this.add.text(180, 200, 'GAME OVER', style('34px', '#ff4444')).setOrigin(0.5);
-    this.add.text(180, 240, reason, style('15px', '#bbbbbb')).setOrigin(0.5);
-    this.add.text(180, 280, `Score: ${this.score}`, style('22px', '#ffffff')).setOrigin(0.5);
+    this.add.text(180, 200, 'GAME OVER', style('34px', pal.css.danger)).setOrigin(0.5);
+    this.add.text(180, 240, reason, style('15px', pal.css.accent)).setOrigin(0.5);
+    this.add.text(180, 280, `Score: ${this.score}`, style('22px', pal.css.text)).setOrigin(0.5);
     this.add.text(180, 310, newBest ? 'NEW BEST!' : `Best: ${this.best}`,
-      style('16px', newBest ? '#ffcc33' : '#88aa99')).setOrigin(0.5);
-    this.add.text(180, 355, 'Tap or OK to retry', style('15px', '#00ff88')).setOrigin(0.5);
+      style('16px', newBest ? pal.css.warn : pal.css.accent)).setOrigin(0.5);
+    this.add.text(180, 355, 'Tap or OK to retry', style('15px', pal.css.fg)).setOrigin(0.5);
 
     // Short delay so the swipe that killed you doesn't instantly restart
     this.time.delayedCall(400, () => {

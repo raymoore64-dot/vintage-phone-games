@@ -24,47 +24,120 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* ---- Phone body ---- */
+    /* ---- Phone body -------------------------------------------------------
+       Skin colours, radii and widths are CSS custom properties on .phone.
+       The values below are the LINICRO 1000 "Graphite Brick" defaults.
+       SkinManager sets the same properties inline when a skin is applied. */
     .phone {
-      width: calc(var(--u) * 44);
-      padding: calc(var(--u) * 2.5) calc(var(--u) * 3) calc(var(--u) * 3);
-      background: linear-gradient(160deg, #3b4250, #1e222a 60%, #15181e);
-      border-radius: calc(var(--u) * 7) calc(var(--u) * 7) calc(var(--u) * 9) calc(var(--u) * 9);
+      --phone-width: 44;
+      --phone-pad-top: 2.5;
+      --phone-pad-side: 3;
+      --phone-pad-bottom: 3;
+      --phone-radius-tl: 7;
+      --phone-radius-tr: 7;
+      --phone-radius-br: 9;
+      --phone-radius-bl: 9;
+      --phone-bg: linear-gradient(160deg, #3b4250, #1e222a 60%, #15181e);
+      --phone-highlight: rgba(255, 255, 255, 0.15);
+      --phone-inset-dark: rgba(0, 0, 0, 0.5);
+      --phone-drop: rgba(0, 0, 0, 0.7);
+      --phone-glow: transparent;
+      --phone-shine: linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.03) 28%, transparent 50%);
+
+      --brand-color: #9aa4b2;
+      --brand-tracking: 0.6;
+      --brand-size: 1.8;
+
+      --speaker-width: 10;
+      --speaker-height: 1;
+      --speaker-bg: repeating-linear-gradient(90deg, #0a0b0d 0 calc(var(--u) * 0.6), #2a2f38 calc(var(--u) * 0.6) calc(var(--u) * 1));
+
+      --screen-wrap-bg: #0b0c0e;
+      --screen-wrap-pad: 1.5;
+      --screen-wrap-radius: 2;
+      --lcd-bg: #000;
+
+      --softbar-bg: #0d1a12;
+      --softbar-border: #1d3a28;
+      --softbar-fg: #00ff88;
+
+      --key-fg: #d8dee8;
+      --key-bg: linear-gradient(#4b5363, #2c323d);
+      --key-radius: 1.2;
+      --key-shadow: #12151a;
+      --key-sub-fg: #8c96a5;
+
+      --call-bg: linear-gradient(#3f8f55, #24603a);
+      --end-bg: linear-gradient(#a8443f, #6e2724);
+      --call-fg: #e8ffe8;
+      --end-fg: #f0d8d8;
+      --call-radius: 2.2;
+
+      --dpad-size: 15;
+      --dpad-radius: 50%;
+      --dpad-bg: radial-gradient(circle at 40% 35%, #4a5262, #232831);
+      --dir-fg: #aab3c0;
+      --dir-active: #00ff88;
+
+      --ok-bg: linear-gradient(#5a6375, #333a46);
+      --ok-fg: #d8dee8;
+      --ok-active: #00ff88;
+      --ok-size: 5.6;
+
+      position: relative;
+      isolation: isolate;
+      width: calc(var(--u) * var(--phone-width));
+      padding: calc(var(--u) * var(--phone-pad-top)) calc(var(--u) * var(--phone-pad-side)) calc(var(--u) * var(--phone-pad-bottom));
+      background: var(--phone-bg);
+      border-radius: calc(var(--u) * var(--phone-radius-tl)) calc(var(--u) * var(--phone-radius-tr)) calc(var(--u) * var(--phone-radius-br)) calc(var(--u) * var(--phone-radius-bl));
       box-shadow:
-        inset 0 calc(var(--u) * 0.4) 0 rgba(255, 255, 255, 0.15),
-        inset 0 calc(var(--u) * -0.6) 0 rgba(0, 0, 0, 0.5),
-        0 calc(var(--u) * 2) calc(var(--u) * 5) rgba(0, 0, 0, 0.7);
+        inset 0 calc(var(--u) * 0.4) 0 var(--phone-highlight),
+        inset 0 calc(var(--u) * -0.6) 0 var(--phone-inset-dark),
+        0 calc(var(--u) * 2) calc(var(--u) * 5) var(--phone-drop),
+        0 0 calc(var(--u) * 4) var(--phone-glow);
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: calc(var(--u) * 1.6);
     }
+    /* Glossy shell highlight sits behind the controls so it doesn't wash out the LCD */
+    .phone::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      z-index: 0;
+      background: var(--phone-shine);
+    }
+    .phone > * { position: relative; z-index: 1; }
+
     .speaker {
-      width: calc(var(--u) * 10);
-      height: calc(var(--u) * 1);
+      width: calc(var(--u) * var(--speaker-width));
+      height: calc(var(--u) * var(--speaker-height));
       border-radius: 99px;
-      background: repeating-linear-gradient(90deg, #0a0b0d 0 calc(var(--u) * 0.6), #2a2f38 calc(var(--u) * 0.6) calc(var(--u) * 1));
+      background: var(--speaker-bg);
     }
     .brand {
-      color: #9aa4b2;
-      font-size: calc(var(--u) * 1.8);
-      letter-spacing: calc(var(--u) * 0.6);
+      color: var(--brand-color);
+      font-size: calc(var(--u) * var(--brand-size));
+      letter-spacing: calc(var(--u) * var(--brand-tracking));
       font-weight: bold;
       margin-top: calc(var(--u) * -0.6);
     }
 
     /* ---- Screen ---- */
     .screen-wrap {
-      background: #0b0c0e;
-      padding: calc(var(--u) * 1.5);
-      border-radius: calc(var(--u) * 2);
+      background: var(--screen-wrap-bg);
+      padding: calc(var(--u) * var(--screen-wrap-pad));
+      border-radius: calc(var(--u) * var(--screen-wrap-radius));
       box-shadow: inset 0 0 0 calc(var(--u) * 0.4) #000, inset 0 0 calc(var(--u) * 2) rgba(0, 0, 0, 0.9);
     }
     .screen { position: relative; width: calc(var(--u) * 36); }
     #game-container {
       width: calc(var(--u) * 36);
       height: calc(var(--u) * 48);
-      background: #000;
+      background: var(--lcd-bg);
       overflow: hidden;
     }
     /* LCD scanlines */
@@ -81,9 +154,9 @@
       align-items: center;
       height: calc(var(--u) * 3.6);
       padding: 0 calc(var(--u) * 1);
-      background: #0d1a12;
-      border-top: 1px solid #1d3a28;
-      color: #00ff88;
+      background: var(--softbar-bg);
+      border-top: 1px solid var(--softbar-border);
+      color: var(--softbar-fg);
       font-size: calc(var(--u) * 1.9);
       font-weight: bold;
     }
@@ -95,15 +168,15 @@
       cursor: pointer;
       touch-action: none;
       border: none;
-      color: #d8dee8;
-      background: linear-gradient(#4b5363, #2c323d);
-      border-radius: calc(var(--u) * 1.2);
-      box-shadow: 0 calc(var(--u) * 0.5) 0 #12151a, inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      color: var(--key-fg);
+      background: var(--key-bg);
+      border-radius: calc(var(--u) * var(--key-radius));
+      box-shadow: 0 calc(var(--u) * 0.5) 0 var(--key-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.2);
       transition: transform 60ms, box-shadow 60ms, filter 60ms;
     }
     .key.pressed, .key:active {
       transform: translateY(calc(var(--u) * 0.4));
-      box-shadow: 0 calc(var(--u) * 0.1) 0 #12151a;
+      box-shadow: 0 calc(var(--u) * 0.1) 0 var(--key-shadow);
       filter: brightness(1.35);
     }
 
@@ -127,19 +200,19 @@
     .call, .end {
       width: calc(var(--u) * 8);
       height: calc(var(--u) * 4.4);
-      border-radius: calc(var(--u) * 2.2);
+      border-radius: calc(var(--u) * var(--call-radius));
       font-size: calc(var(--u) * 2.2);
     }
-    .call { background: linear-gradient(#3f8f55, #24603a); }
-    .end { background: linear-gradient(#a8443f, #6e2724); }
+    .call { background: var(--call-bg); color: var(--call-fg); }
+    .end { background: var(--end-bg); color: var(--end-fg); }
 
     /* D-pad */
     .dpad {
       position: relative;
-      width: calc(var(--u) * 15);
-      height: calc(var(--u) * 15);
-      border-radius: 50%;
-      background: radial-gradient(circle at 40% 35%, #4a5262, #232831);
+      width: calc(var(--u) * var(--dpad-size));
+      height: calc(var(--u) * var(--dpad-size));
+      border-radius: var(--dpad-radius);
+      background: var(--dpad-bg);
       box-shadow: inset 0 calc(var(--u) * 0.3) 0 rgba(255, 255, 255, 0.15), 0 calc(var(--u) * 0.6) calc(var(--u) * 1) rgba(0, 0, 0, 0.6);
     }
     .dir {
@@ -148,13 +221,13 @@
       height: calc(var(--u) * 5);
       border: none;
       background: transparent;
-      color: #aab3c0;
+      color: var(--dir-fg);
       font-size: calc(var(--u) * 2.2);
       cursor: pointer;
       touch-action: none;
       font-family: inherit;
     }
-    .dir.pressed, .dir:active { color: #00ff88; }
+    .dir.pressed, .dir:active { color: var(--dir-active); }
     .dir.up    { top: 0; left: 50%; transform: translateX(-50%); }
     .dir.down  { bottom: 0; left: 50%; transform: translateX(-50%); }
     .dir.left  { left: 0; top: 50%; transform: translateY(-50%); }
@@ -164,20 +237,20 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: calc(var(--u) * 5.6);
-      height: calc(var(--u) * 5.6);
-      border-radius: 50%;
+      width: calc(var(--u) * var(--ok-size));
+      height: calc(var(--u) * var(--ok-size));
+      border-radius: var(--dpad-radius);
       border: none;
       cursor: pointer;
       touch-action: none;
       font-family: inherit;
       font-weight: bold;
       font-size: calc(var(--u) * 1.7);
-      color: #d8dee8;
-      background: linear-gradient(#5a6375, #333a46);
-      box-shadow: 0 calc(var(--u) * 0.4) 0 #12151a;
+      color: var(--ok-fg);
+      background: var(--ok-bg);
+      box-shadow: 0 calc(var(--u) * 0.4) 0 var(--key-shadow);
     }
-    .ok.pressed, .ok:active { filter: brightness(1.4); color: #00ff88; }
+    .ok.pressed, .ok:active { filter: brightness(1.4); color: var(--ok-active); }
 
     /* Number keypad */
     .keypad {
@@ -195,7 +268,7 @@
       justify-content: center;
       gap: calc(var(--u) * 0.6);
     }
-    .keypad .key small { font-size: calc(var(--u) * 1.2); color: #8c96a5; }
+    .keypad .key small { font-size: calc(var(--u) * 1.2); color: var(--key-sub-fg); }
 
     .hint {
       position: fixed;
