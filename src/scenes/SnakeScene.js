@@ -6,6 +6,8 @@ import { getSkin } from '../skins/SkinManager.js';
 import { addScore, formatUnlockLine } from '../progress/Progress.js';
 import * as Sfx from '../audio/Sfx.js';
 import * as Music from '../audio/Music.js';
+import { attachPerks, perkSpeed, perkPoints, useTough } from '../skins/perks.js';
+import { onRunStart } from '../phone/Sms.js';
 
 // ---- Tuning -------------------------------------------------------------
 const GRID = 20;            // cell size in px
@@ -113,6 +115,8 @@ export default class SnakeScene extends Phaser.Scene {
     });
 
     this.pauseCtl = attachPause(this);
+    attachPerks(this, 'snake');
+    onRunStart('snake');
     Music.enter('snake');
     this.draw();
   }
@@ -141,7 +145,7 @@ export default class SnakeScene extends Phaser.Scene {
     if (isFrozen(this)) return;
     if (!this.alive) return;
 
-    this.moveTimer += delta;
+    this.moveTimer += delta * perkSpeed(this);
     while (this.moveTimer >= this.moveInterval && this.alive) {
       this.moveTimer -= this.moveInterval;
       this.moveSnake();
@@ -182,7 +186,14 @@ export default class SnakeScene extends Phaser.Scene {
 
     // Self collision (the tail moves away this step unless we're eating)
     const body = willEat ? this.snake : this.snake.slice(0, -1);
-    if (body.some((s) => s.x === head.x && s.y === head.y)) {
+    const bitAt = body.findIndex((s) => s.x === head.x && s.y === head.y);
+    if (bitAt >= 0) {
+      // Tough phone: bite your tail off instead of dying (once per run)
+      if (bitAt > 0 && useTough(this)) {
+        const cut = this.snake.splice(bitAt);
+        cut.forEach((c) => this.addTrail(c, now - 1000));
+        return;
+      }
       this.gameOver('You bit yourself');
       return;
     }
@@ -190,6 +201,11 @@ export default class SnakeScene extends Phaser.Scene {
     // Hardened trail collision (glowing trail is safe to cross)
     const t = this.trail.get(key(head));
     if (t && this.isSolid(t, now)) {
+      // Tough phone: smash through one hardened block (once per run)
+      if (useTough(this)) {
+        this.trail.delete(key(head));
+        return;
+      }
       this.gameOver('Hit your hardened trail');
       return;
     }
@@ -199,7 +215,7 @@ export default class SnakeScene extends Phaser.Scene {
     if (willEat) {
       // Risk bonus: +1 for every solid wall on the board right now
       const bonus = this.solidCount(now);
-      const gain = 10 + bonus;
+      const gain = perkPoints(this, 10 + bonus);
       this.score += gain;
       this.scoreText.setText(`Score: ${this.score}`);
       this.floatText(head, bonus > 0 ? `+${gain}!` : `+${gain}`, bonus > 0 ? this.pal.css.warn : this.pal.css.text);
@@ -357,7 +373,7 @@ export default class SnakeScene extends Phaser.Scene {
       this.bestText.setText(`Best: ${this.best}`);
     }
 
-    const unlockMsg = formatUnlockLine(addScore('snake', this.score));
+    const unlockMsg = formatUnlockLine(addScore('snake', this.score, { newBest }));
     Sfx.snakeCrash();
     Music.stop();
     Sfx.playEnd({ newBest, unlocked: !!unlockMsg });

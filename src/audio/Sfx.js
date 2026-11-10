@@ -29,7 +29,8 @@ import {
 } from './beep.js';
 
 const PAUSED_OK = new Set([
-  'pause', 'resume', 'countdownTick', 'muteOn', 'muteOff'
+  'pause', 'resume', 'countdownTick', 'muteOn', 'muteOff',
+  'smsAlert', 'batteryLow'
 ]);
 
 const THROTTLE = {
@@ -81,7 +82,23 @@ const PHRASES = {
   blocksMove:      { notes: [{ f: 392, d: 0.03 }], gain: 0.10, type: 'square' },
   blocksRotate:    { notes: [{ f: 494, d: 0.04 }], gain: 0.12, type: 'square' },
   blocksDrop:      { notes: [{ f: 220, d: 0.06 }], gain: 0.13, type: 'square' },
-  blocksLevelUp:   { notes: [{ f: 523, d: 0.06 }, { f: 659, d: 0.06 }, { f: 784, d: 0.12 }], gain: 0.14, type: 'square' }
+  blocksLevelUp:   { notes: [{ f: 523, d: 0.06 }, { f: 659, d: 0.06 }, { f: 784, d: 0.12 }], gain: 0.14, type: 'square' },
+
+  // Living phone: the classic "S M S" morse alert ( ... -- ... )
+  smsAlert: {
+    notes: [
+      { f: 1320, d: 0.06, gap: 0.05 }, { f: 1320, d: 0.06, gap: 0.05 }, { f: 1320, d: 0.06, gap: 0.14 },
+      { f: 1320, d: 0.17, gap: 0.05 }, { f: 1320, d: 0.17, gap: 0.14 },
+      { f: 1320, d: 0.06, gap: 0.05 }, { f: 1320, d: 0.06, gap: 0.05 }, { f: 1320, d: 0.06 }
+    ],
+    gain: 0.13, type: 'square'
+  },
+  batteryLow:      { notes: [{ f: 880, d: 0.09, gap: 0.06 }, { f: 660, d: 0.09, gap: 0.06 }, { f: 440, d: 0.2 }], gain: 0.14, type: 'square' },
+  perkBonus:       { notes: [{ f: 988, d: 0.05 }, { f: 1319, d: 0.08 }], gain: 0.12, type: 'pulse' },
+  perkGlitch:      { notes: [{ f: 1200, d: 0.03 }, { f: 300, d: 0.03 }, { f: 1500, d: 0.03 }, { f: 200, d: 0.05 }], gain: 0.12, type: 'square' },
+  codeOk:          { notes: [{ f: 523, d: 0.07 }, { f: 784, d: 0.07 }, { f: 1047, d: 0.07 }, { f: 1319, d: 0.18 }], gain: 0.14, type: 'pulse' },
+  codeBad:         { notes: [{ f: 196, d: 0.12, gap: 0.04 }, { f: 165, d: 0.18 }], gain: 0.14, type: 'square' },
+  codeKey:         { notes: [{ f: 1040, d: 0.04 }], gain: 0.1, type: 'square' }
 };
 
 const NOISE = {

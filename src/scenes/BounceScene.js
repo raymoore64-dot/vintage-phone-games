@@ -6,6 +6,8 @@ import { getSkin } from '../skins/SkinManager.js';
 import { addScore, formatUnlockLine } from '../progress/Progress.js';
 import * as Sfx from '../audio/Sfx.js';
 import * as Music from '../audio/Music.js';
+import { attachPerks, perkSpeed, perkPoints, useTough } from '../skins/perks.js';
+import { onRunStart } from '../phone/Sms.js';
 
 // ---- Tuning -------------------------------------------------------------
 const W = 360;
@@ -106,6 +108,9 @@ export default class BounceScene extends Phaser.Scene {
     setSoftKeys('Flip', 'Menu');
 
     this.pauseCtl = attachPause(this);
+    attachPerks(this, 'bounce');
+    onRunStart('bounce');
+    this.shieldUntil = 0;
     Music.enter('bounce');
     this.draw();
   }
@@ -164,7 +169,7 @@ export default class BounceScene extends Phaser.Scene {
   // ---- Game loop --------------------------------------------------------
   update(_time, delta) {
     if (isFrozen(this) || !this.alive) return;
-    const dt = Math.min(delta, 50) / 1000;
+    const dt = Math.min(delta, 50) / 1000 * perkSpeed(this);
 
     this.scroll = Math.min(
       SCROLL_MAX,
@@ -232,6 +237,11 @@ export default class BounceScene extends Phaser.Scene {
           Sfx.bounceBounce();
         }
       }
+    } else if (this.shielded() && this.ball.y > H - 24 && this.ball.vy > 0) {
+      // Tough shield: bounce off the bottom of the screen
+      this.ball.vy = -BOUNCE_SPEED;
+      this.squash = 1;
+      Sfx.bounceBounce();
     } else if (this.ball.y > H + 40) {
       this.gameOver('Fell through');
       return;
@@ -246,18 +256,27 @@ export default class BounceScene extends Phaser.Scene {
           Sfx.bounceBounce();
         }
       }
+    } else if (this.shielded() && this.ball.y < HUD_H + 24 && this.ball.vy < 0) {
+      this.ball.vy = BOUNCE_SPEED;
+      this.squash = 1;
+      Sfx.bounceBounce();
     } else if (this.ball.y < HUD_H - 40) {
       this.gameOver('Flew off');
       return;
     }
 
     // Crushed if a narrow section somehow overlaps the ball from both sides
-    if (walls.floorY != null && walls.ceilY != null && walls.floorY - walls.ceilY < r * 2 + 2) {
+    if (!this.shielded() && walls.floorY != null && walls.ceilY != null && walls.floorY - walls.ceilY < r * 2 + 2) {
       this.gameOver('Crushed');
     }
   }
 
+  shielded() {
+    return gameNow(this) < (this.shieldUntil || 0);
+  }
+
   collideHazards() {
+    if (this.shielded()) return;
     const bx = this.ball.x;
     const by = this.ball.y;
     for (const seg of this.segments) {
@@ -320,7 +339,7 @@ export default class BounceScene extends Phaser.Scene {
           if (this.flips === this.lastCollectFlips + 1) this.combo += 1;
           else this.combo = 1;
           this.lastCollectFlips = this.flips;
-          const gain = 10 * this.combo;
+          const gain = perkPoints(this, 10 * this.combo);
           this.score += gain;
           const label = this.combo > 1 ? `+${gain} x${this.combo}` : `+${gain}`;
           this.floatText(ring.x, ring.y, label, this.combo > 1 ? this.pal.css.warn : this.pal.css.text);
@@ -341,8 +360,9 @@ export default class BounceScene extends Phaser.Scene {
       const hi = Math.max(a.y, b.y);
       if (this.ball.y > lo - 10 && this.ball.y < hi + 10) {
         seg.pairBonus = true;
-        this.score += 50;
-        this.floatText(a.x, (lo + hi) / 2, 'FLIP THRU +50', this.pal.css.warn);
+        const thru = perkPoints(this, 50);
+        this.score += thru;
+        this.floatText(a.x, (lo + hi) / 2, `FLIP THRU +${thru}`, this.pal.css.warn);
         Sfx.bounceCombo();
       }
     }
@@ -351,7 +371,7 @@ export default class BounceScene extends Phaser.Scene {
   awardDistance() {
     const marks = Math.floor(this.viewX / 50);
     if (marks > this.distanceAwarded) {
-      this.score += marks - this.distanceAwarded;
+      this.score += perkPoints(this, marks - this.distanceAwarded, { quiet: true });
       this.distanceAwarded = marks;
     }
   }
@@ -551,6 +571,10 @@ export default class BounceScene extends Phaser.Scene {
     const by = this.ball.y;
     g.fillStyle(pal.fg, 1);
     g.fillEllipse(bx, by, BALL_R * 2 * sx, BALL_R * 2 * sy);
+    if (this.shielded()) {
+      g.lineStyle(2, pal.warn, 0.5 + 0.5 * Math.sin(gameNow(this) / 60));
+      g.strokeCircle(bx, by, BALL_R + 6);
+    }
     g.fillStyle(pal.text, 0.35);
     g.fillEllipse(bx - 2.5, by - 2.5, 5 * sx, 4 * sy);
 
@@ -628,6 +652,16 @@ export default class BounceScene extends Phaser.Scene {
   // ---- Game over --------------------------------------------------------
   gameOver(reason) {
     if (!this.alive) return;
+    if (useTough(this)) {
+      // Tough phone: 2 s shield, ball recentred in the current gap
+      this.shieldUntil = gameNow(this) + 2000;
+      const w = this.wallsAt(this.ball.x);
+      const top = w.ceilY != null ? w.ceilY : HUD_H + WALL;
+      const bot = w.floorY != null ? w.floorY : H - WALL;
+      this.ball.y = (top + bot) / 2;
+      this.ball.vy = 0;
+      return;
+    }
     this.alive = false;
     setSoftKeys('Retry', 'Menu');
     this.cameras.main.shake(200, 0.01);
@@ -641,7 +675,7 @@ export default class BounceScene extends Phaser.Scene {
       this.bestText.setText(`Best: ${this.best}`);
     }
 
-    const unlockMsg = formatUnlockLine(addScore('bounce', this.score));
+    const unlockMsg = formatUnlockLine(addScore('bounce', this.score, { newBest }));
     Sfx.bounceDeath();
     Music.stop();
     Sfx.playEnd({ newBest, unlocked: !!unlockMsg });

@@ -6,6 +6,8 @@ import { getSkin } from '../skins/SkinManager.js';
 import { addScore, formatUnlockLine } from '../progress/Progress.js';
 import * as Sfx from '../audio/Sfx.js';
 import * as Music from '../audio/Music.js';
+import { attachPerks, perkSpeed, perkPoints, useTough } from '../skins/perks.js';
+import { onRunStart } from '../phone/Sms.js';
 
 const W = 360;
 const H = 480;
@@ -136,6 +138,8 @@ export default class SimonScene extends Phaser.Scene {
 
     this.createLabels();
     this.pauseCtl = attachPause(this);
+    attachPerks(this, 'simon');
+    onRunStart('simon');
     Music.enter('simon');
     Music.setDuck(0.06);
     this.draw();
@@ -143,7 +147,9 @@ export default class SimonScene extends Phaser.Scene {
   }
 
   flashMs() {
-    return Math.max(FLASH_MIN, FLASH_START - this.round * 28);
+    // Phone speed perk: faster phones flash quicker, Slow-mo flashes longer
+    const ms = Math.max(FLASH_MIN, FLASH_START - this.round * 28) / perkSpeed(this);
+    return Math.max(200, Math.round(ms));
   }
 
   onCursor(dx, dy) {
@@ -196,6 +202,21 @@ export default class SimonScene extends Phaser.Scene {
     const need = want[this.inputIndex];
     this.flashCell(cell, INPUT_FLASH);
     if (cell !== need) {
+      if (useTough(this)) {
+        // Tough phone: one wrong note forgiven, the round replays
+        this.inputIndex = 0;
+        this.phase = 'watch';
+        this.status = 'TOUGH! AGAIN';
+        this.substatus = 'Watch the sequence again';
+        this.drawHud();
+        this.time.delayedCall(900, () => {
+          if (!this.alive) return;
+          this.status = this.reverse ? 'REVERSE!' : 'WATCH';
+          this.drawHud();
+          this.playSequence();
+        });
+        return false;
+      }
       this.gameOver(this.reverse ? 'Wrong reverse note' : 'Wrong note');
       return false;
     }
@@ -210,7 +231,7 @@ export default class SimonScene extends Phaser.Scene {
     const base = 10 * this.round;
     const streakBonus = 5 * this.streak;
     const reverseBonus = this.reverse ? 25 : 0;
-    const gain = base + streakBonus + reverseBonus;
+    const gain = perkPoints(this, base + streakBonus + reverseBonus);
     this.score += gain;
     const bits = [`+${base}`];
     if (streakBonus) bits.push(`streak +${streakBonus}`);
@@ -427,7 +448,7 @@ export default class SimonScene extends Phaser.Scene {
       localStorage.setItem(BEST_KEY, String(this.best));
       this.bestText.setText(`Best: ${this.best}`);
     }
-    const unlockMsg = formatUnlockLine(addScore('simon', this.score));
+    const unlockMsg = formatUnlockLine(addScore('simon', this.score, { newBest }));
     Music.stop();
     Sfx.playEnd({ newBest, unlocked: !!unlockMsg });
 

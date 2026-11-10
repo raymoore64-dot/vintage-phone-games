@@ -6,6 +6,8 @@ import { getSkin } from '../skins/SkinManager.js';
 import { addScore, formatUnlockLine } from '../progress/Progress.js';
 import * as Sfx from '../audio/Sfx.js';
 import * as Music from '../audio/Music.js';
+import { attachPerks, perkSpeed, perkPoints, perkLives, toughLives, hasLuck } from '../skins/perks.js';
+import { onRunStart } from '../phone/Sms.js';
 
 // ---- Tuning -------------------------------------------------------------
 const W = 360;
@@ -106,6 +108,11 @@ export default class ImpactScene extends Phaser.Scene {
     setSoftKeys('Burst', 'Menu');
 
     this.pauseCtl = attachPause(this);
+    attachPerks(this, 'impact');
+    onRunStart('impact');
+    // Tough: +1 life · Executive: -1 life
+    this.maxLives = perkLives(this, START_LIVES) + toughLives(this);
+    this.lives = this.maxLives;
     Music.enter('impact');
     this.draw();
   }
@@ -137,7 +144,7 @@ export default class ImpactScene extends Phaser.Scene {
   // ---- Game loop --------------------------------------------------------
   update(_time, delta) {
     if (isFrozen(this) || !this.alive) return;
-    const dt = Math.min(delta, 50) / 1000;
+    const dt = Math.min(delta, 50) / 1000 * perkSpeed(this);
     const now = gameNow(this);
 
     this.moveShip(dt);
@@ -468,15 +475,16 @@ export default class ImpactScene extends Phaser.Scene {
   }
 
   killEnemy(e) {
-    this.score += e.score;
+    const gain = perkPoints(this, e.score);
+    this.score += gain;
     this.killed += 1;
-    this.floatText(e.x, e.y, `+${e.score}`, this.pal.css.text);
+    this.floatText(e.x, e.y, `+${gain}`, this.pal.css.text);
     Sfx.impactExplosion();
     if (e.kind === 'boss') {
       this.boss = null;
       this.dropPickup(e.x, e.y, Math.random() < 0.5 ? 'rapid' : 'shield');
       this.dropPickup(e.x, e.y + 18, Math.random() < 0.5 ? 'rapid' : 'shield');
-    } else if (Math.random() < 0.12 || this.killed % 10 === 0) {
+    } else if (Math.random() < (hasLuck(this) ? 0.21 : 0.12) || this.killed % 10 === 0) {
       this.dropPickup(e.x, e.y, Math.random() < 0.5 ? 'rapid' : 'shield');
     }
   }
@@ -583,7 +591,7 @@ export default class ImpactScene extends Phaser.Scene {
     g.fillRect(0, 0, W, HUD_H);
     g.fillStyle(pal.fg, 0.35);
     g.fillRect(0, HUD_H - 1, W, 1);
-    for (let i = 0; i < START_LIVES; i++) {
+    for (let i = 0; i < this.maxLives; i++) {
       const lx = 178 + i * 16;
       g.fillStyle(i < this.lives ? pal.fg : pal.dim, i < this.lives ? 1 : 0.4);
       g.fillTriangle(lx, 8, lx + 10, 16, lx, 22);
@@ -676,7 +684,7 @@ export default class ImpactScene extends Phaser.Scene {
       this.bestText.setText(`Best: ${this.best}`);
     }
 
-    const unlockMsg = formatUnlockLine(addScore('impact', this.score));
+    const unlockMsg = formatUnlockLine(addScore('impact', this.score, { newBest }));
     Music.stop();
     Sfx.playEnd({ newBest, unlocked: !!unlockMsg });
 

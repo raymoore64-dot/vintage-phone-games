@@ -135,10 +135,103 @@
     }
     .screen { position: relative; width: calc(var(--u) * 36); }
     #game-container {
+      position: relative;
       width: calc(var(--u) * 36);
       height: calc(var(--u) * 48);
       background: var(--lcd-bg);
       overflow: hidden;
+      transition: filter 400ms;
+    }
+
+    /* ---- Living phone: status bar above the LCD (same colours as the soft-key bar) ---- */
+    .statusbar {
+      display: flex;
+      align-items: center;
+      gap: calc(var(--u) * 1);
+      height: calc(var(--u) * 2.8);
+      padding: 0 calc(var(--u) * 0.9);
+      background: var(--softbar-bg);
+      border-bottom: 1px solid var(--softbar-border);
+      color: var(--softbar-fg);
+      font-size: calc(var(--u) * 1.6);
+      font-weight: bold;
+      line-height: 1;
+      transition: filter 400ms;
+    }
+    .statusbar svg { display: block; height: calc(var(--u) * 1.6); width: auto; fill: currentColor; }
+    .sb-signal .bar.off { opacity: 0.22; }
+    .sb-mail { display: flex; align-items: center; gap: calc(var(--u) * 0.4); opacity: 0.3; }
+    .sb-mail svg { fill: none; stroke: currentColor; stroke-width: 1.3; }
+    .sb-mail.has { opacity: 1; animation: sb-blink 1.2s steps(2, start) infinite; }
+    @keyframes sb-blink { to { opacity: 0.35; } }
+    .sb-clock { margin-left: auto; letter-spacing: calc(var(--u) * 0.1); }
+    .sb-batt { display: flex; align-items: center; gap: calc(var(--u) * 0.3); }
+    .sb-batt .cell.off { opacity: 0.18; }
+    .sb-batt .plug { display: none; }
+    .sb-batt.mains .plug { display: block; }
+    .sb-batt.low .cells, .sb-batt.empty .cells { animation: sb-blink 0.8s steps(2, start) infinite; }
+    .sb-batt.charging .bolt { display: block; }
+    .sb-batt .bolt { display: none; }
+
+    /* Toast for incoming texts / battery (never blocks input) */
+    .phone-toast {
+      position: absolute;
+      left: 6%;
+      right: 6%;
+      top: calc(var(--u) * 3.4);
+      z-index: 5;
+      padding: calc(var(--u) * 0.7) calc(var(--u) * 1);
+      background: var(--softbar-fg);
+      color: var(--softbar-bg);
+      font-size: calc(var(--u) * 1.6);
+      font-weight: bold;
+      text-align: center;
+      border-radius: calc(var(--u) * 0.5);
+      box-shadow: 0 calc(var(--u) * 0.3) calc(var(--u) * 1) rgba(0, 0, 0, 0.5);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(calc(var(--u) * -1));
+      transition: opacity 180ms, transform 180ms;
+    }
+    .phone-toast.show { opacity: 1; transform: translateY(0); }
+
+    /* LCD effects driven by phone perks / battery */
+    .lcd-ghost {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      image-rendering: pixelated;
+      mix-blend-mode: lighten;
+      opacity: 0;
+      transition: opacity 200ms;
+    }
+    .lcd-ghost.on { opacity: 0.6; }
+    .screen.lcd-sun #game-container { filter: contrast(1.12) saturate(1.2) brightness(1.06); }
+    .screen.lcd-dim #game-container, .screen.lcd-dim .statusbar { filter: brightness(0.45); }
+    .screen.lcd-glitch #game-container { animation: lcd-glitch 450ms steps(6) 1; }
+    @keyframes lcd-glitch {
+      0%   { transform: translate(0, 0); filter: none; }
+      20%  { transform: translate(calc(var(--u) * 0.6), 0); filter: hue-rotate(90deg) saturate(2); }
+      40%  { transform: translate(calc(var(--u) * -0.5), calc(var(--u) * 0.2)); filter: invert(0.15) hue-rotate(200deg); }
+      60%  { transform: translate(calc(var(--u) * 0.3), 0); filter: hue-rotate(300deg); }
+      80%  { transform: translate(calc(var(--u) * -0.2), 0); filter: none; }
+      100% { transform: translate(0, 0); filter: none; }
+    }
+
+    /* Incoming text: the whole phone buzzes */
+    .phone.buzz { animation: phone-buzz 480ms linear 1; }
+    @keyframes phone-buzz {
+      0%, 100% { transform: translate(0, 0) rotate(0); }
+      10%, 50%, 90% { transform: translate(calc(var(--u) * -0.4), 0) rotate(-0.6deg); }
+      30%, 70% { transform: translate(calc(var(--u) * 0.4), 0) rotate(0.6deg); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .phone.buzz, .screen.lcd-glitch #game-container { animation: none; }
     }
     /* LCD scanlines */
     .screen::after {
@@ -296,7 +389,14 @@
 
     <div class="screen-wrap">
       <div class="screen">
+        <div class="statusbar" aria-hidden="true">
+          <span class="sb-signal" id="sb-signal"><svg viewBox="0 0 14 10"><rect class="bar" x="0" y="8" width="2" height="2"/><rect class="bar" x="3" y="6" width="2" height="4"/><rect class="bar" x="6" y="4" width="2" height="6"/><rect class="bar" x="9" y="2" width="2" height="8"/><rect class="bar" x="12" y="0" width="2" height="10"/></svg></span>
+          <span class="sb-mail" id="sb-mail"><svg viewBox="0 0 13 9"><rect x="0.65" y="0.65" width="11.7" height="7.7"/><path d="M0.9 1 L6.5 5.2 L12.1 1"/></svg><b id="sb-unread"></b></span>
+          <span class="sb-clock" id="sb-clock">--:--</span>
+          <span class="sb-batt" id="sb-batt"><svg class="plug" viewBox="0 0 8 10"><rect x="1.5" y="0" width="1.2" height="3"/><rect x="5.3" y="0" width="1.2" height="3"/><rect x="0" y="3" width="8" height="3.5" rx="1"/><rect x="3.3" y="6.5" width="1.4" height="3.5"/></svg><svg class="bolt" viewBox="0 0 6 10"><path d="M4 0 L0 5.6 H2.6 L1.6 10 L6 4 H3.3 Z"/></svg><svg class="cells" viewBox="0 0 22 10"><path d="M0 0 H20 V3 H22 V7 H20 V10 H0 Z M1 1 V9 H19 V1 Z" fill-rule="evenodd"/><rect class="cell" x="2" y="2" width="3" height="6"/><rect class="cell" x="5.5" y="2" width="3" height="6"/><rect class="cell" x="9" y="2" width="3" height="6"/><rect class="cell" x="12.5" y="2" width="3" height="6"/><rect class="cell" x="16" y="2" width="2.5" height="6"/></svg></span>
+        </div>
         <div id="game-container"></div>
+        <div class="phone-toast" id="phone-toast" role="status" aria-live="polite"></div>
         <div class="softbar"><span id="soft-left"></span><span id="soft-right"></span></div>
       </div>
     </div>
@@ -335,7 +435,7 @@
     </div>
   </div>
 
-  <div class="hint">Keyboard: arrows/WASD move · Enter/Space OK · Q / E soft keys · Esc back · P / # pause · M sound · N music · 0-9 keypad</div>
+  <div class="hint">Keyboard: arrows/WASD move · Enter/Space OK · Q / E soft keys · Esc back · P / # pause · M sound · N music · 0-9 keypad · 7 messages · * code</div>
 
   <script type="module" src="/src/main.js"></script>
 </body>

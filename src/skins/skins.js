@@ -586,9 +586,84 @@ export const SKINS = [
       text: '#ffd8f0',
       panel: '#241018'
     }
+  },
+
+  // ------------------------------------------------------------------
+  // 9. PROTO Clear (secret)
+  // A see-through engineering prototype: smoky clear plastic, visible
+  // "circuit" glints, chrome keys and an icy white-cyan LCD. Hidden in
+  // the picker until the SMS code *7283 is entered on the menu.
+  // ------------------------------------------------------------------
+  {
+    id: 'proto-clear',
+    name: 'Clear',
+    brand: 'PROTO',
+    model: 'Clear',
+    tagline: 'Secret see-through prototype · ice LCD',
+    unlockAt: 0,
+    secret: 'proto',
+    css: {
+      '--phone-width': '44',
+      '--phone-pad-top': '2.5',
+      '--phone-pad-side': '3',
+      '--phone-pad-bottom': '3',
+      '--phone-radius-tl': '6',
+      '--phone-radius-tr': '6',
+      '--phone-radius-br': '8',
+      '--phone-radius-bl': '8',
+      '--phone-bg': 'repeating-linear-gradient(90deg, rgba(120, 255, 200, 0.06) 0 2px, transparent 2px 22px), repeating-linear-gradient(0deg, rgba(255, 210, 120, 0.06) 0 2px, transparent 2px 30px), linear-gradient(160deg, rgba(220, 235, 245, 0.42), rgba(120, 140, 160, 0.38) 55%, rgba(40, 50, 64, 0.7))',
+      '--phone-highlight': 'rgba(255, 255, 255, 0.55)',
+      '--phone-inset-dark': 'rgba(0, 10, 20, 0.35)',
+      '--phone-drop': 'rgba(0, 0, 0, 0.6)',
+      '--phone-glow': 'rgba(180, 240, 255, 0.35)',
+      '--phone-shine': 'linear-gradient(180deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.12) 26%, transparent 50%)',
+      '--brand-color': '#e8f8ff',
+      '--brand-tracking': '1',
+      '--brand-size': '1.7',
+      '--speaker-width': '10',
+      '--speaker-height': '1',
+      '--speaker-bg': 'repeating-linear-gradient(90deg, #10161c 0 calc(var(--u) * 0.6), #8ea4b4 calc(var(--u) * 0.6) calc(var(--u) * 1))',
+      '--screen-wrap-bg': 'rgba(10, 16, 22, 0.92)',
+      '--screen-wrap-pad': '1.5',
+      '--screen-wrap-radius': '2',
+      '--lcd-bg': '#06121a',
+      '--softbar-bg': '#06121a',
+      '--softbar-border': '#1e4458',
+      '--softbar-fg': '#bff4ff',
+      '--key-fg': '#0c1820',
+      '--key-bg': 'linear-gradient(#f4f8fb, #a8b6c2)',
+      '--key-radius': '1.4',
+      '--key-shadow': '#4a5864',
+      '--key-sub-fg': '#3a4c5a',
+      '--call-bg': 'linear-gradient(#8ef0c0, #3aa078)',
+      '--end-bg': 'linear-gradient(#ff9aa8, #c04858)',
+      '--call-fg': '#06241a',
+      '--end-fg': '#2a060c',
+      '--call-radius': '2',
+      '--dpad-size': '15',
+      '--dpad-radius': '50%',
+      '--dpad-bg': 'radial-gradient(circle at 40% 35%, #f8fbff, #8c9aa8)',
+      '--dir-fg': '#16242e',
+      '--dir-active': '#00a0d0',
+      '--ok-bg': 'linear-gradient(#ffffff, #b4c2ce)',
+      '--ok-fg': '#0c1820',
+      '--ok-active': '#00a0d0',
+      '--ok-size': '5.6'
+    },
+    palette: {
+      bg: '#06121a',
+      fg: '#bff4ff',
+      dim: '#4a7488',
+      accent: '#7fd8f0',
+      warn: '#ffe27a',
+      danger: '#ff6a7a',
+      text: '#e6fbff',
+      panel: '#0e2230'
+    }
   }
 
 ];
+
 
 export default SKINS;
 

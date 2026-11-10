@@ -6,6 +6,8 @@ import { getSkin } from '../skins/SkinManager.js';
 import { addScore, formatUnlockLine } from '../progress/Progress.js';
 import * as Sfx from '../audio/Sfx.js';
 import * as Music from '../audio/Music.js';
+import { attachPerks, perkSpeed, perkPoints, useTough, hasLuck } from '../skins/perks.js';
+import { onRunStart } from '../phone/Sms.js';
 
 const W = 360;
 const H = 480;
@@ -177,6 +179,10 @@ export default class BlocksScene extends Phaser.Scene {
 
     this.spawn(this.takeNext());
     this.pauseCtl = attachPause(this);
+    attachPerks(this, 'blocks');
+    onRunStart('blocks');
+    // Lucky phone: start with an extra Quake charge
+    if (hasLuck(this)) this.quakeCharges = Math.min(MAX_QUAKE, this.quakeCharges + 1);
     Music.enter('blocks');
     this.draw();
   }
@@ -254,7 +260,7 @@ export default class BlocksScene extends Phaser.Scene {
 
   softDrop() {
     if (this.tryMove(0, 1)) {
-      this.score += 1;
+      this.score += perkPoints(this, 1, { quiet: true });
       this.fallTimer = 0;
       return true;
     }
@@ -296,7 +302,7 @@ export default class BlocksScene extends Phaser.Scene {
     if (cleared > 0) {
       const table = [0, 100, 300, 500, 800];
       const prevLevel = this.level;
-      this.score += (table[cleared] || 800) * this.level;
+      this.score += perkPoints(this, (table[cleared] || 800) * this.level);
       this.lines += cleared;
       this.level = 1 + Math.floor(this.lines / LINES_PER_LEVEL);
       this.quakeCharges = Math.min(MAX_QUAKE, this.quakeCharges + cleared);
@@ -398,7 +404,7 @@ export default class BlocksScene extends Phaser.Scene {
     }
 
     // Gravity
-    this.fallTimer += delta;
+    this.fallTimer += delta * perkSpeed(this);
     const interval = this.fallInterval();
     while (this.fallTimer >= interval && this.alive && this.piece) {
       this.fallTimer -= interval;
@@ -524,6 +530,15 @@ export default class BlocksScene extends Phaser.Scene {
   // ---- Game over --------------------------------------------------------
   gameOver(reason) {
     if (!this.alive) return;
+    if (useTough(this)) {
+      // Tough phone: the top 8 rows crumble away and play goes on (once per run)
+      for (let y = 0; y < 8; y++) this.grid[y] = Array(COLS).fill(null);
+      this.piece = null;
+      this.cameras.main.shake(160, 0.008);
+      Sfx.blocksQuake();
+      this.spawn(this.takeNext());
+      return;
+    }
     this.alive = false;
     setSoftKeys('Retry', 'Menu');
     this.cameras.main.shake(200, 0.01);
@@ -536,7 +551,7 @@ export default class BlocksScene extends Phaser.Scene {
       localStorage.setItem(BEST_KEY, String(this.best));
       this.bestText.setText(`Best: ${this.best}`);
     }
-    const unlockMsg = formatUnlockLine(addScore('blocks', this.score));
+    const unlockMsg = formatUnlockLine(addScore('blocks', this.score, { newBest }));
     Music.stop();
     Sfx.playEnd({ newBest, unlocked: !!unlockMsg });
 

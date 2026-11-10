@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { initPhoneInput } from './input/PhoneInput.js';
 import { initSfx } from './audio/Sfx.js';
 import { initMusic } from './audio/Music.js';
-import { applySkin, getSkin } from './skins/SkinManager.js';
+import { applySkin, getSkin, setSkin } from './skins/SkinManager.js';
 import BootScene from './scenes/BootScene.js';
 import MenuScene from './scenes/MenuScene.js';
 import SnakeScene from './scenes/SnakeScene.js';
@@ -12,6 +12,11 @@ import BricksScene from './scenes/BricksScene.js';
 import BlocksScene from './scenes/BlocksScene.js';
 import SimonScene from './scenes/SimonScene.js';
 import SkinScene from './scenes/SkinScene.js';
+import InboxScene from './scenes/InboxScene.js';
+import { initPhone } from './phone/Phone.js';
+import { initLcd } from './phone/Lcd.js';
+import { initSms } from './phone/Sms.js';
+import { publishPerks } from './skins/perks.js';
 
 // Wire up the on-screen keypad and the physical keyboard
 initPhoneInput();
@@ -20,6 +25,10 @@ initMusic();
 
 // Paint the saved phone skin onto the HTML bezel before the canvas starts
 applySkin();
+
+// Living phone: SMS inbox state (welcome texts, daily dare) and perk debug
+initSms();
+publishPerks();
 
 const config = {
   type: Phaser.AUTO,
@@ -36,7 +45,7 @@ const config = {
     BootScene, MenuScene,
     SnakeScene, BounceScene, ImpactScene,
     BricksScene, BlocksScene, SimonScene,
-    SkinScene
+    SkinScene, InboxScene
   ],
   physics: {
     default: 'arcade',
@@ -50,4 +59,10 @@ const config = {
 
 const game = new Phaser.Game(config);
 window.__vpgGame = game;
+
+// Battery / signal / clock status bar + LCD effects ride on the game loop
+initPhone(game);
+initLcd(game);
+window.__vpg = window.__vpg || {};
+window.__vpg.setSkin = (id) => setSkin(id).id;
 export default game;

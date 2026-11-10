@@ -6,6 +6,8 @@ import { getSkin } from '../skins/SkinManager.js';
 import { addScore, formatUnlockLine } from '../progress/Progress.js';
 import * as Sfx from '../audio/Sfx.js';
 import * as Music from '../audio/Music.js';
+import { attachPerks, perkSpeed, perkPoints, perkLives, toughLives } from '../skins/perks.js';
+import { onRunStart } from '../phone/Sms.js';
 
 const W = 360;
 const H = 480;
@@ -103,12 +105,18 @@ export default class BricksScene extends Phaser.Scene {
     });
 
     this.pauseCtl = attachPause(this);
+    attachPerks(this, 'bricks');
+    onRunStart('bricks');
+    // Tough: +1 life · Executive: -1 life
+    this.maxLives = perkLives(this, LIVES) + toughLives(this);
+    this.lives = this.maxLives;
+    this.livesText.setText(this.livesStr());
     Music.enter('bricks');
     this.draw();
   }
 
   livesStr() {
-    return `Lives ${this.lives}/${LIVES}`;
+    return `Lives ${this.lives}/${this.maxLives || LIVES}`;
   }
 
   onAction() {
@@ -216,7 +224,7 @@ export default class BricksScene extends Phaser.Scene {
   // ---- Loop -------------------------------------------------------------
   update(_time, delta) {
     if (isFrozen(this) || !this.alive) return;
-    const dt = Math.min(delta, 50) / 1000;
+    const dt = Math.min(delta, 50) / 1000 * perkSpeed(this);
 
     let vx = 0;
     if (isHeld('left')) vx -= PADDLE_SPEED;
@@ -339,7 +347,7 @@ export default class BricksScene extends Phaser.Scene {
       const chain = this.explode(brick);
       removed.push(...chain);
       const n = chain.length;
-      const gained = chain.reduce((s, _, i) => s + 10 * (i + 1), 0);
+      const gained = perkPoints(this, chain.reduce((s, _, i) => s + 10 * (i + 1), 0));
       this.score += gained;
       this.floatText(brick.x + brick.w / 2, brick.y, n > 1 ? `CHAIN x${n} +${gained}` : `+${gained}`, this.pal.css.warn);
       this.cameras.main.shake(80 + Math.min(120, n * 20), 0.004 + n * 0.001);
@@ -347,7 +355,7 @@ export default class BricksScene extends Phaser.Scene {
     } else {
       brick.alive = false;
       removed.push(brick);
-      this.score += 10;
+      this.score += perkPoints(this, 10);
       this.flashBrick(brick, this.pal.fg, 180);
       Sfx.bricksBrick();
     }
@@ -552,7 +560,7 @@ export default class BricksScene extends Phaser.Scene {
       localStorage.setItem(BEST_KEY, String(this.best));
       this.bestText.setText(`Best: ${this.best}`);
     }
-    const unlockMsg = formatUnlockLine(addScore('bricks', this.score));
+    const unlockMsg = formatUnlockLine(addScore('bricks', this.score, { newBest }));
     Music.stop();
     Sfx.playEnd({ newBest, unlocked: !!unlockMsg });
 
