@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { bindPhoneInput, setSoftKeys } from '../input/PhoneInput.js';
+import { attachPause, isFrozen, gameNow } from '../ui/PauseOverlay.js';
 import { hexToInt, shadeHex } from '../skins/skins.js';
 import { getSkin } from '../skins/SkinManager.js';
 import { addScore, formatUnlockLine } from '../progress/Progress.js';
@@ -113,6 +114,7 @@ export default class SimonScene extends Phaser.Scene {
 
     // Tap a cell on the canvas
     this.input.on('pointerdown', (p) => {
+      if (isFrozen(this)) return;
       unlockAudio();
       if (!this.alive) {
         if (this.canRestart) this.scene.restart();
@@ -132,6 +134,7 @@ export default class SimonScene extends Phaser.Scene {
     });
 
     this.createLabels();
+    this.pauseCtl = attachPause(this);
     this.draw();
     this.time.delayedCall(500, () => this.nextRound());
   }
@@ -303,13 +306,14 @@ export default class SimonScene extends Phaser.Scene {
   // ---- Rendering --------------------------------------------------------
   update() {
     // Lights are event-driven; we still refresh the cursor pulse
+    if (isFrozen(this)) return;
     if (this.alive) this.draw();
   }
 
   draw() {
     const g = this.graphics;
     const pal = this.pal;
-    const now = this.time.now;
+    const now = gameNow(this);
     g.clear();
 
     g.fillStyle(pal.bg, 1);

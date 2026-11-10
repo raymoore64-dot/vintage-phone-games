@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { bindPhoneInput, isHeld, setSoftKeys } from '../input/PhoneInput.js';
+import { attachPause, isFrozen, gameNow } from '../ui/PauseOverlay.js';
 import { hexToInt, shadeHex } from '../skins/skins.js';
 import { getSkin } from '../skins/SkinManager.js';
 import { addScore, formatUnlockLine } from '../progress/Progress.js';
@@ -102,6 +103,7 @@ export default class BounceScene extends Phaser.Scene {
     });
     setSoftKeys('Flip', 'Menu');
 
+    this.pauseCtl = attachPause(this);
     this.draw();
   }
 
@@ -113,7 +115,7 @@ export default class BounceScene extends Phaser.Scene {
   // ---- Ability ----------------------------------------------------------
   flip() {
     if (!this.alive) return;
-    const now = this.time.now;
+    const now = gameNow(this);
     if (now < this.flipReadyAt) {
       this.floatText(this.ball.x, this.ball.y, 'Wait', this.pal.css.dim);
       return;
@@ -136,7 +138,7 @@ export default class BounceScene extends Phaser.Scene {
 
   hop() {
     if (!this.alive) return;
-    const now = this.time.now;
+    const now = gameNow(this);
     if (now < this.hopReadyAt) return;
     this.ball.vy -= this.gravSign * HOP_BOOST;
     this.hopReadyAt = now + HOP_COOLDOWN;
@@ -147,7 +149,7 @@ export default class BounceScene extends Phaser.Scene {
   }
 
   updateFlipButton() {
-    const left = this.flipReadyAt - this.time.now;
+    const left = this.flipReadyAt - gameNow(this);
     const label = left > 0 ? `Flip ${Math.ceil(left / 1000)}` : 'Flip';
     if (label !== this.flipLabel) {
       this.flipLabel = label;
@@ -157,7 +159,7 @@ export default class BounceScene extends Phaser.Scene {
 
   // ---- Game loop --------------------------------------------------------
   update(_time, delta) {
-    if (!this.alive) return;
+    if (isFrozen(this) || !this.alive) return;
     const dt = Math.min(delta, 50) / 1000;
 
     this.scroll = Math.min(
@@ -272,7 +274,7 @@ export default class BounceScene extends Phaser.Scene {
   advanceMover(m) {
     // Movers are updated from the draw/collide path once per frame; use
     // a stamped time so we don't double-step if both loops touch one.
-    const now = this.time.now;
+    const now = gameNow(this);
     if (m._t == null) m._t = now;
     const dt = Math.min(0.05, (now - m._t) / 1000);
     m._t = now;
@@ -605,7 +607,7 @@ export default class BounceScene extends Phaser.Scene {
     // Rings
     for (const ring of seg.rings) {
       if (ring.collected) continue;
-      const pulse = 1 + Math.sin(this.time.now / 140) * 0.08;
+      const pulse = 1 + Math.sin(gameNow(this) / 140) * 0.08;
       const rx = ring.x - vx;
       g.lineStyle(3, pal.ring, 1);
       g.strokeCircle(rx, ring.y, ring.r * pulse);

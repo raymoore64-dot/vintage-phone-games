@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { bindPhoneInput, isHeld, setSoftKeys } from '../input/PhoneInput.js';
+import { attachPause, isFrozen, gameNow } from '../ui/PauseOverlay.js';
 import { hexToInt, shadeHex } from '../skins/skins.js';
 import { getSkin } from '../skins/SkinManager.js';
 import { addScore, formatUnlockLine } from '../progress/Progress.js';
@@ -99,6 +100,7 @@ export default class BricksScene extends Phaser.Scene {
       if (window.__vpg && window.__vpg.bricks === this) delete window.__vpg.bricks;
     });
 
+    this.pauseCtl = attachPause(this);
     this.draw();
   }
 
@@ -128,7 +130,7 @@ export default class BricksScene extends Phaser.Scene {
   }
 
   armNudge() {
-    const now = this.time.now;
+    const now = gameNow(this);
     if (now < this.nudgeReadyAt) {
       this.floatText(this.paddleX, PADDLE_Y - 18, 'Wait', this.pal.css.dim);
       return;
@@ -209,7 +211,7 @@ export default class BricksScene extends Phaser.Scene {
 
   // ---- Loop -------------------------------------------------------------
   update(_time, delta) {
-    if (!this.alive) return;
+    if (isFrozen(this) || !this.alive) return;
     const dt = Math.min(delta, 50) / 1000;
 
     let vx = 0;
@@ -275,7 +277,7 @@ export default class BricksScene extends Phaser.Scene {
     const clamped = Phaser.Math.Clamp(offset, -1, 1);
     let speed = Math.max(START_SPEED, Math.hypot(this.ball.vx, this.ball.vy));
 
-    const now = this.time.now;
+    const now = gameNow(this);
     const nudged = now < this.nudgeArmedUntil;
     if (nudged) {
       this.nudgeArmedUntil = 0;
@@ -382,7 +384,7 @@ export default class BricksScene extends Phaser.Scene {
   }
 
   flashBrick(b, color, ms) {
-    this.flashes.push({ x: b.x, y: b.y, w: b.w, h: b.h, color, until: this.time.now + ms });
+    this.flashes.push({ x: b.x, y: b.y, w: b.w, h: b.h, color, until: gameNow(this) + ms });
   }
 
   checkCleared() {
@@ -432,9 +434,9 @@ export default class BricksScene extends Phaser.Scene {
     let label = 'Nudge';
     if (this.serving) label = 'Serve';
     else {
-      const left = this.nudgeReadyAt - this.time.now;
+      const left = this.nudgeReadyAt - gameNow(this);
       if (left > 0) label = `Nudge ${Math.ceil(left / 1000)}`;
-      else if (this.time.now < this.nudgeArmedUntil) label = 'Armed';
+      else if (gameNow(this) < this.nudgeArmedUntil) label = 'Armed';
     }
     if (label !== this.nudgeLabel) {
       this.nudgeLabel = label;
@@ -456,7 +458,7 @@ export default class BricksScene extends Phaser.Scene {
   draw() {
     const g = this.graphics;
     const pal = this.pal;
-    const now = this.time.now;
+    const now = gameNow(this);
     g.clear();
 
     g.fillStyle(pal.bg, 1);

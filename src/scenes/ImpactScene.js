@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { bindPhoneInput, isHeld, setSoftKeys } from '../input/PhoneInput.js';
+import { attachPause, isFrozen, gameNow } from '../ui/PauseOverlay.js';
 import { hexToInt, shadeHex } from '../skins/skins.js';
 import { getSkin } from '../skins/SkinManager.js';
 import { addScore, formatUnlockLine } from '../progress/Progress.js';
@@ -48,8 +49,8 @@ export default class ImpactScene extends Phaser.Scene {
     this.lives = START_LIVES;
     this.alive = true;
     this.canRestart = false;
-    this.startedAt = this.time.now;
-    this.invulnUntil = this.time.now + 900;
+    this.startedAt = gameNow(this);
+    this.invulnUntil = gameNow(this) + 900;
     this.shield = false;
     this.rapidUntil = 0;
     this.lastFire = 0;
@@ -65,7 +66,7 @@ export default class ImpactScene extends Phaser.Scene {
     this.ghost = { x: this.ship.x, y: this.ship.y, visible: false };
     this.tape = [];
     this.firedThisFrame = false;
-    this.lastGhostT = this.time.now - ECHO_DELAY;
+    this.lastGhostT = gameNow(this) - ECHO_DELAY;
 
     this.enemies = [];
     this.bullets = [];
@@ -102,6 +103,7 @@ export default class ImpactScene extends Phaser.Scene {
     });
     setSoftKeys('Burst', 'Menu');
 
+    this.pauseCtl = attachPause(this);
     this.draw();
   }
 
@@ -118,7 +120,7 @@ export default class ImpactScene extends Phaser.Scene {
       if (this.canRestart) this.scene.restart();
       return;
     }
-    const now = this.time.now;
+    const now = gameNow(this);
     if (now < this.burstReadyAt) {
       this.floatText(this.ship.x, this.ship.y, 'Wait', this.pal.css.dim);
       return;
@@ -130,9 +132,9 @@ export default class ImpactScene extends Phaser.Scene {
 
   // ---- Game loop --------------------------------------------------------
   update(_time, delta) {
-    if (!this.alive) return;
+    if (isFrozen(this) || !this.alive) return;
     const dt = Math.min(delta, 50) / 1000;
-    const now = this.time.now;
+    const now = gameNow(this);
 
     this.moveShip(dt);
     this.recordTape(now);
@@ -244,7 +246,7 @@ export default class ImpactScene extends Phaser.Scene {
   }
 
   tryFire(fromGhost) {
-    const now = this.time.now;
+    const now = gameNow(this);
     const interval = now < this.rapidUntil ? RAPID_INTERVAL : FIRE_INTERVAL;
     if (!fromGhost) {
       if (now - this.lastFire < interval) return;
@@ -335,13 +337,13 @@ export default class ImpactScene extends Phaser.Scene {
   updatePickups(dt) {
     for (const p of this.pickups) {
       p.x += p.vx * dt;
-      p.y += Math.sin((this.time.now + p.wobble) / 200) * 10 * dt * 8;
+      p.y += Math.sin((gameNow(this) + p.wobble) / 200) * 10 * dt * 8;
     }
     this.pickups = this.pickups.filter((p) => p.x > -20 && !p.taken);
   }
 
   spawnStep(dt) {
-    if (this.time.now - this.startedAt < 800) return;
+    if (gameNow(this) - this.startedAt < 800) return;
     if (this.score >= this.nextBossAt && !this.boss) {
       this.spawnBoss();
       this.nextBossAt += BOSS_EVERY;
@@ -362,7 +364,7 @@ export default class ImpactScene extends Phaser.Scene {
       this.enemies.push({
         kind: 'shooter', x: W + 16, y, vx: -(46 + speedBoost * 0.3), vy: 0,
         hp: 2, r: 11, score: 100,
-        nextShot: this.time.now + 700,
+        nextShot: gameNow(this) + 700,
         shotEvery: Math.max(700, 1300 - this.score / 8)
       });
     } else if (roll < 0.5) {
@@ -389,7 +391,7 @@ export default class ImpactScene extends Phaser.Scene {
       kind: 'boss', x: W + 40, y, baseY: y, vx: -50, vy: 0,
       hp, maxHp: hp, r: 24, score: 500,
       amp: 90, phase: 0,
-      nextShot: this.time.now + 800,
+      nextShot: gameNow(this) + 800,
       shotEvery: Math.max(520, 900 - this.bossIndex * 60),
       volleys: 0
     };
@@ -400,7 +402,7 @@ export default class ImpactScene extends Phaser.Scene {
 
   // ---- Combat -----------------------------------------------------------
   collide() {
-    const now = this.time.now;
+    const now = gameNow(this);
     // Friend bullets vs enemies
     for (const b of this.bullets) {
       if (!b.friend || b.life <= 0) continue;
@@ -475,7 +477,7 @@ export default class ImpactScene extends Phaser.Scene {
   hitPlayer() {
     if (this.shield) {
       this.shield = false;
-      this.invulnUntil = this.time.now + 700;
+      this.invulnUntil = gameNow(this) + 700;
       this.cameras.main.shake(80, 0.004);
       this.floatText(this.ship.x, this.ship.y, 'SHIELD!', this.pal.css.accent);
       return;
@@ -486,7 +488,7 @@ export default class ImpactScene extends Phaser.Scene {
       this.gameOver('Ship destroyed');
       return;
     }
-    this.invulnUntil = this.time.now + INVULN_MS;
+    this.invulnUntil = gameNow(this) + INVULN_MS;
     this.floatText(this.ship.x, this.ship.y, `-1  ${this.lives} left`, this.pal.css.danger);
   }
 
@@ -497,7 +499,7 @@ export default class ImpactScene extends Phaser.Scene {
   }
 
   updateBurstButton() {
-    const now = this.time.now;
+    const now = gameNow(this);
     let label = 'Burst';
     if (now < this.burstUntil) label = `Burst ${Math.ceil((this.burstUntil - now) / 1000)}`;
     else if (now < this.burstReadyAt) label = `Burst ${Math.ceil((this.burstReadyAt - now) / 1000)}`;
@@ -528,7 +530,7 @@ export default class ImpactScene extends Phaser.Scene {
   draw() {
     const g = this.graphics;
     const pal = this.pal;
-    const now = this.time.now;
+    const now = gameNow(this);
     g.clear();
 
     g.fillStyle(pal.bg, 1);

@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { bindPhoneInput, setSoftKeys } from '../input/PhoneInput.js';
+import { attachPause, isFrozen, gameNow } from '../ui/PauseOverlay.js';
 import { hexToInt, shadeHex } from '../skins/skins.js';
 import { getSkin } from '../skins/SkinManager.js';
 import { addScore, formatUnlockLine } from '../progress/Progress.js';
@@ -85,10 +86,11 @@ export default class SnakeScene extends Phaser.Scene {
 
     // ---- Touch: swipe anywhere on the board, or tap to turn toward the tap ----
     this.input.on('pointerdown', (p) => {
+      if (isFrozen(this)) return;
       this.swipeStart = { x: p.x, y: p.y };
     });
     this.input.on('pointerup', (p) => {
-      if (!this.alive || !this.swipeStart) return;
+      if (isFrozen(this) || !this.alive || !this.swipeStart) return;
       const dx = p.x - this.swipeStart.x;
       const dy = p.y - this.swipeStart.y;
       this.swipeStart = null;
@@ -108,6 +110,7 @@ export default class SnakeScene extends Phaser.Scene {
       }
     });
 
+    this.pauseCtl = attachPause(this);
     this.draw();
   }
 
@@ -132,6 +135,7 @@ export default class SnakeScene extends Phaser.Scene {
 
   // ---- Game loop ----------------------------------------------------------
   update(time, delta) {
+    if (isFrozen(this)) return;
     if (!this.alive) return;
 
     this.moveTimer += delta;
@@ -156,7 +160,7 @@ export default class SnakeScene extends Phaser.Scene {
   }
 
   moveSnake() {
-    const now = this.time.now;
+    const now = gameNow(this);
     if (this.dirQueue.length) this.direction = this.dirQueue.shift();
 
     const head = {
@@ -209,7 +213,7 @@ export default class SnakeScene extends Phaser.Scene {
   }
 
   cleanTrail() {
-    const now = this.time.now;
+    const now = gameNow(this);
     this.trail.forEach((c, k) => {
       if (now - c.born >= GLOW_MS + SOLID_MS) this.trail.delete(k);
     });
@@ -218,7 +222,7 @@ export default class SnakeScene extends Phaser.Scene {
   // ---- Shed: drop your last segments as near-instant walls ----------------
   shed() {
     if (!this.alive) return;
-    const now = this.time.now;
+    const now = gameNow(this);
     const head = this.snake[0];
 
     if (now < this.shedReadyAt) {
@@ -238,7 +242,7 @@ export default class SnakeScene extends Phaser.Scene {
   }
 
   updateShedButton() {
-    const left = this.shedReadyAt - this.time.now;
+    const left = this.shedReadyAt - gameNow(this);
     let label = 'Shed';
     if (left > 0) label = `Shed ${Math.ceil(left / 1000)}`;
     else if (this.snake.length < SHED_MIN_LEN) label = 'Shed -';
@@ -278,7 +282,7 @@ export default class SnakeScene extends Phaser.Scene {
   // ---- Rendering ----------------------------------------------------------
   draw() {
     const g = this.graphics;
-    const now = this.time.now;
+    const now = gameNow(this);
     const pal = this.pal;
     g.clear();
 

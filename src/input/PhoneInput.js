@@ -4,12 +4,20 @@ import Phaser from 'phaser';
  * One input bus for the whole phone.
  * The on-screen buttons and the physical keyboard both feed it, and every
  * scene listens to the same actions:
- *   up, down, left, right, ok, softLeft, softRight, back, digit (with '0'-'9', '*', '#')
+ *   up, down, left, right, ok, softLeft, softRight, back, pause,
+ *   digit (with '0'-'9', '*'; '#' is pause, not a digit)
  * Like old Nokias, keypad 2/4/6/8 also act as up/left/right/down and 5 acts as OK.
+ *
+ * Pause: keyboard P, and the keypad '#' key, emit a 'pause' event. Space
+ * stays OK. Star (*) stays a digit (Space Impact uses it for Echo Burst).
  *
  * isHeld(action) is true while a key or on-screen button is down, so games
  * can steer continuously or auto-repeat fire without changing the press-once
  * events the rest of the app already uses.
+ *
+ * When a scene has a pause controller attached (attachPause), bound handlers
+ * are gated: while the game is frozen, movement and digits are swallowed,
+ * OK / left soft / P / # resume, and C / Esc / right soft return to the menu.
  */
 
 const bus = new Phaser.Events.EventEmitter();
@@ -24,11 +32,12 @@ const KEYBOARD = {
   Enter: 'ok', ' ': 'ok',
   q: 'softLeft', Q: 'softLeft',
   e: 'softRight', E: 'softRight',
-  Escape: 'back', Backspace: 'back'
+  Escape: 'back', Backspace: 'back',
+  p: 'pause', P: 'pause'
 };
 
 // Holding these keys down shouldn't fire them over and over
-const NO_REPEAT = new Set(['ok', 'softLeft', 'softRight', 'back']);
+const NO_REPEAT = new Set(['ok', 'softLeft', 'softRight', 'back', 'pause']);
 
 const digitId = (d) => (d === '*' ? 'star' : d === '#' ? 'hash' : `d${d}`);
 
@@ -62,6 +71,10 @@ export function isHeld(action) {
   return held.has(action);
 }
 
+export function getInputBus() {
+  return bus;
+}
+
 // Light up the on-screen button that matches a press (keyboard included)
 function flash(id) {
   const el = document.querySelector(`[data-key="${id}"]`);
@@ -73,6 +86,12 @@ function flash(id) {
 
 export function press(action, digit) {
   if (action === 'digit') {
+    // '#' is the pause key on the keypad; it is not forwarded as a digit.
+    if (digit === '#') {
+      flash(digitId(digit));
+      bus.emit('pause');
+      return;
+    }
     flash(digitId(digit));
     bus.emit('digit', digit);
     const alias = DIGIT_ALIASES[digit];
@@ -92,6 +111,9 @@ function releasePointer(pointerId) {
 export function initPhoneInput() {
   if (initialized) return;
   initialized = true;
+
+  window.__vpg = window.__vpg || {};
+  window.__vpg.getInputBus = getInputBus;
 
   document.querySelectorAll('[data-key]').forEach((el) => {
     el.addEventListener('pointerdown', (e) => {
@@ -170,13 +192,38 @@ export function setSoftKeys(left = '', right = '') {
   }
 }
 
+export function getSoftKeys() {
+  return { left: softCache.left || '', right: softCache.right || '' };
+}
+
 /*
  * Listen to phone actions from a scene. Handlers are removed automatically
  * when the scene shuts down (scene.start / scene.restart), so nothing leaks.
  *   bindPhoneInput(this, { up: () => ..., ok: () => ..., digit: (d) => ... });
+ *
+ * If attachPause() has been (or will be) called on the scene, these
+ * handlers are gated while the game is frozen so a single binding does
+ * both gameplay and pause-overlay input.
  */
 export function bindPhoneInput(scene, handlers) {
-  const entries = Object.entries(handlers);
+  const entries = Object.entries(handlers).map(([evt, fn]) => {
+    const wrapped = (...args) => {
+      const ctl = scene.__pauseCtl;
+      if (ctl && ctl.isFrozen()) {
+        if (evt === 'ok' || evt === 'softLeft' || evt === 'pause') {
+          ctl.resume();
+          return;
+        }
+        if (evt === 'back' || evt === 'softRight') {
+          ctl.toMenu();
+          return;
+        }
+        return;
+      }
+      fn(...args);
+    };
+    return [evt, wrapped];
+  });
   entries.forEach(([evt, fn]) => bus.on(evt, fn, scene));
   scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
     entries.forEach(([evt, fn]) => bus.off(evt, fn, scene));

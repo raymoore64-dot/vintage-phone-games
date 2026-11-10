@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { bindPhoneInput, isHeld, setSoftKeys } from '../input/PhoneInput.js';
+import { attachPause, isFrozen, gameNow } from '../ui/PauseOverlay.js';
 import { hexToInt, shadeHex } from '../skins/skins.js';
 import { getSkin } from '../skins/SkinManager.js';
 import { addScore, formatUnlockLine } from '../progress/Progress.js';
@@ -173,6 +174,7 @@ export default class BlocksScene extends Phaser.Scene {
     });
 
     this.spawn(this.takeNext());
+    this.pauseCtl = attachPause(this);
     this.draw();
   }
 
@@ -342,6 +344,7 @@ export default class BlocksScene extends Phaser.Scene {
 
   // ---- Loop -------------------------------------------------------------
   update(_time, delta) {
+    if (isFrozen(this)) return;
     if (!this.alive || !this.piece) {
       this.draw();
       return;
