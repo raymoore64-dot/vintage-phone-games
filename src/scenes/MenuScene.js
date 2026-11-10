@@ -5,8 +5,8 @@ import { getSkin } from '../skins/SkinManager.js';
 
 const GAMES = [
   { name: 'Snake: Trail', scene: 'SnakeScene', bestKey: 'vpg.snake.best' },
-  { name: 'Bounce', scene: null },
-  { name: 'Space Impact', scene: null }
+  { name: 'Bounce: Flip', scene: 'BounceScene', bestKey: 'vpg.bounce.best' },
+  { name: 'Space Impact: Echo', scene: 'ImpactScene', bestKey: 'vpg.impact.best' }
 ];
 
 export default class MenuScene extends Phaser.Scene {
@@ -31,7 +31,7 @@ export default class MenuScene extends Phaser.Scene {
       const y = 100 + i * 64;
       const bg = this.add.rectangle(180, y, 336, 52, hexToInt(pal.panel)).setInteractive({ useHandCursor: true });
       const num = this.add.text(30, y, String(i + 1), mono('24px', pal.fg)).setOrigin(0, 0.5);
-      const label = this.add.text(66, y, game.scene ? game.name : `${game.name} (soon)`, mono('24px', pal.text))
+      const label = this.add.text(66, y, game.name, mono('22px', pal.text))
         .setOrigin(0, 0.5);
       bg.on('pointerdown', () => {
         this.select(i);

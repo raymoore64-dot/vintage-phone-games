@@ -6,6 +6,10 @@ import Phaser from 'phaser';
  * scene listens to the same actions:
  *   up, down, left, right, ok, softLeft, softRight, back, digit (with '0'-'9', '*', '#')
  * Like old Nokias, keypad 2/4/6/8 also act as up/left/right/down and 5 acts as OK.
+ *
+ * isHeld(action) is true while a key or on-screen button is down, so games
+ * can steer continuously or auto-repeat fire without changing the press-once
+ * events the rest of the app already uses.
  */
 
 const bus = new Phaser.Events.EventEmitter();
@@ -31,6 +35,33 @@ const digitId = (d) => (d === '*' ? 'star' : d === '#' ? 'hash' : `d${d}`);
 let initialized = false;
 let softCache = { left: null, right: null };
 
+// Keyboard ref-counts (ArrowUp and W can both mean "up") plus pointer holds.
+const keyCounts = new Map();
+const keyHeldDigits = new Set();
+const pointerHolds = new Map();
+const held = new Set();
+
+function rebuildHeld() {
+  held.clear();
+  keyCounts.forEach((n, action) => { if (n > 0) held.add(action); });
+  keyHeldDigits.forEach((d) => {
+    const alias = DIGIT_ALIASES[d];
+    if (alias) held.add(alias);
+  });
+  pointerHolds.forEach((h) => {
+    if (h.action === 'digit') {
+      const alias = DIGIT_ALIASES[h.digit];
+      if (alias) held.add(alias);
+    } else {
+      held.add(h.action);
+    }
+  });
+}
+
+export function isHeld(action) {
+  return held.has(action);
+}
+
 // Light up the on-screen button that matches a press (keyboard included)
 function flash(id) {
   const el = document.querySelector(`[data-key="${id}"]`);
@@ -52,6 +83,12 @@ export function press(action, digit) {
   bus.emit(action);
 }
 
+function releasePointer(pointerId) {
+  if (!pointerHolds.has(pointerId)) return;
+  pointerHolds.delete(pointerId);
+  rebuildHeld();
+}
+
 export function initPhoneInput() {
   if (initialized) return;
   initialized = true;
@@ -59,24 +96,63 @@ export function initPhoneInput() {
   document.querySelectorAll('[data-key]').forEach((el) => {
     el.addEventListener('pointerdown', (e) => {
       e.preventDefault();
+      try { el.setPointerCapture(e.pointerId); } catch { /* older browsers */ }
       const d = el.dataset.digit;
-      if (d !== undefined) press('digit', d);
-      else press(el.dataset.key);
+      if (d !== undefined) {
+        pointerHolds.set(e.pointerId, { action: 'digit', digit: d });
+        rebuildHeld();
+        press('digit', d);
+      } else {
+        pointerHolds.set(e.pointerId, { action: el.dataset.key });
+        rebuildHeld();
+        press(el.dataset.key);
+      }
     });
+    el.addEventListener('pointerup', (e) => releasePointer(e.pointerId));
+    el.addEventListener('pointercancel', (e) => releasePointer(e.pointerId));
+    el.addEventListener('lostpointercapture', (e) => releasePointer(e.pointerId));
     el.addEventListener('contextmenu', (e) => e.preventDefault());
   });
 
   window.addEventListener('keydown', (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     if (/^[0-9*#]$/.test(e.key)) {
-      if (!e.repeat) press('digit', e.key);
+      if (!e.repeat) {
+        keyHeldDigits.add(e.key);
+        rebuildHeld();
+        press('digit', e.key);
+      }
     } else if (KEYBOARD[e.key]) {
       const action = KEYBOARD[e.key];
+      if (!e.repeat) {
+        keyCounts.set(action, (keyCounts.get(action) || 0) + 1);
+        rebuildHeld();
+      }
       if (!(e.repeat && NO_REPEAT.has(action))) press(action);
     } else {
       return;
     }
     e.preventDefault();
+  });
+
+  window.addEventListener('keyup', (e) => {
+    if (/^[0-9*#]$/.test(e.key)) {
+      keyHeldDigits.delete(e.key);
+      rebuildHeld();
+    } else if (KEYBOARD[e.key]) {
+      const action = KEYBOARD[e.key];
+      const n = (keyCounts.get(action) || 1) - 1;
+      if (n <= 0) keyCounts.delete(action);
+      else keyCounts.set(action, n);
+      rebuildHeld();
+    }
+  });
+
+  window.addEventListener('blur', () => {
+    keyCounts.clear();
+    keyHeldDigits.clear();
+    pointerHolds.clear();
+    rebuildHeld();
   });
 }
 
