@@ -20,6 +20,7 @@
 
 import M, { CAST, GAME_INFO } from './messages.js';
 import * as Phone from './Phone.js';
+import * as Wap from '../wap/Wap.js';
 import * as Secrets from './Secrets.js';
 import * as Progress from '../progress/Progress.js';
 import SKINS from '../skins/skins.js';
@@ -126,8 +127,11 @@ function ensureDay() {
   if (st.dare && !st.dare.done && st.dare.day < day) {
     fireOnce(`expired:${st.dare.day}`, () => queue(make(M.DARE_EXPIRED.from, M.DARE_EXPIRED.text)));
   }
-  let idx = hash(day) % M.DARES.length;
-  if (st.dare && st.dare.idx === idx) idx = (idx + 1) % M.DARES.length;
+  // WAP-game dares only once that game is downloaded
+  const pool = M.DARES.map((d, i) => i).filter((i) => !M.DARES[i].wap || Wap.isDownloaded(M.DARES[i].game));
+  let pi = hash(day) % pool.length;
+  if (st.dare && st.dare.idx === pool[pi] && pool.length > 1) pi = (pi + 1) % pool.length;
+  const idx = pool[pi];
   const d = M.DARES[idx];
   st.dare = { day, idx, game: d.game, target: d.target, bonus: d.bonus, from: d.from, done: false, best: 0 };
   const vars = { game: GAME_INFO[d.game].name, target: d.target, bonus: d.bonus };

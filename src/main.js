@@ -20,6 +20,10 @@ import CreditsScene from './scenes/CreditsScene.js';
 import WapScene from './scenes/WapScene.js';
 import PetScene from './scenes/PetScene.js';
 import ShareScene from './scenes/ShareScene.js';
+import HopperScene from './scenes/HopperScene.js';
+import FishingScene from './scenes/FishingScene.js';
+import RhythmScene from './scenes/RhythmScene.js';
+import RallyScene from './scenes/RallyScene.js';
 import { initWap } from './wap/Wap.js';
 import { initPet } from './pet/Pet.js';
 import { publishShare } from './share/ScoreCard.js';
@@ -61,9 +65,9 @@ const config = {
     BricksScene, BlocksScene, SimonScene,
     SkinScene, InboxScene,
     SettingsScene, CodeBookScene, CreditsScene,
-    WapScene, PetScene, ShareScene
-    // Batch C: add HopperScene, FishingScene, RhythmScene, RallyScene here;
-    // the WAP catalogue (src/wap/catalog.js) then offers them for download.
+    WapScene, PetScene, ShareScene,
+    // WAP cartridges: registering a scene makes its catalogue entry downloadable
+    HopperScene, FishingScene, RhythmScene, RallyScene
   ],
   physics: {
     default: 'arcade',

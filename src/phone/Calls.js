@@ -164,6 +164,7 @@ function canRingNow(scene) {
   if (Phone.isRescuing() || Phone.batteryLevel() < 2) return false;
   if (Phone.signalBars() < 2) return false;
   if (scene.scene.key === 'SimonScene' && scene.phase !== 'input') return false;
+  if (scene.phase === 'howto') return false;
   return !!scene.__pauseCtl;
 }
 

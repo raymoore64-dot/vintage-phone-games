@@ -44,7 +44,11 @@ const THROTTLE = {
   impactGhostShot: 90,
   snakeTrailWarn: 180,
   blocksMove: 80,
-  bricksPaddle: 80
+  bricksPaddle: 80,
+  hopDrain: 260,
+  fishReel: 70,
+  rallyTick: 120,
+  rhythmTap: 40
 };
 
 const PHRASES = {
@@ -138,6 +142,32 @@ const PHRASES = {
   wapFail:         { notes: [{ f: 300, d: 0.12, gap: 0.05 }, { f: 220, d: 0.2 }], gain: 0.12, type: 'square' },
   shareSnap:       { notes: [{ f: 1319, d: 0.03 }, { f: 988, d: 0.05 }], gain: 0.11, type: 'square' },
 
+  // ---- Batch C: WAP cartridge games ----
+  hopHop:          { notes: [{ f: 660, d: 0.03 }, { f: 990, d: 0.03 }], gain: 0.1, type: 'square' },
+  hopBoost:        { notes: [{ f: 523, d: 0.03 }, { f: 784, d: 0.03 }, { f: 1047, d: 0.03 }, { f: 1319, d: 0.06 }], gain: 0.12, type: 'pulse' },
+  hopBar:          { notes: [{ f: 1175, d: 0.04 }, { f: 1397, d: 0.07 }], gain: 0.11, type: 'pulse' },
+  hopZap:          { notes: [{ f: 220, d: 0.05 }, { f: 160, d: 0.05 }, { f: 110, d: 0.12 }], gain: 0.13, type: 'square' },
+  hopDrain:        { notes: [{ f: 300, d: 0.03 }], gain: 0.06, type: 'square' },
+  hopDeliver:      { notes: [{ f: 784, d: 0.06 }, { f: 988, d: 0.06 }, { f: 1175, d: 0.06 }, { f: 1319, d: 0.06 }, { f: 1175, d: 0.05 }, { f: 1319, d: 0.16 }], gain: 0.12, type: 'pulse' },
+  fishCast:        { notes: [{ f: 900, d: 0.04 }, { f: 700, d: 0.05 }, { f: 500, d: 0.06 }, { f: 330, d: 0.08 }], gain: 0.1, type: 'triangle' },
+  fishNibble:      { notes: [{ f: 140, d: 0.04 }], gain: 0.12, type: 'square' },
+  fishBite:        { notes: [{ f: 110, d: 0.06, gap: 0.02 }, { f: 110, d: 0.06, gap: 0.02 }, { f: 110, d: 0.09 }], gain: 0.16, type: 'square' },
+  fishHook:        { notes: [{ f: 660, d: 0.04 }, { f: 1320, d: 0.08 }], gain: 0.12, type: 'pulse' },
+  fishReel:        { notes: [{ f: 420, d: 0.02 }], gain: 0.07, type: 'square' },
+  fishSnap:        { notes: [{ f: 1200, d: 0.03 }, { f: 300, d: 0.05 }, { f: 150, d: 0.14 }], gain: 0.14, type: 'square' },
+  fishEscape:      { notes: [{ f: 392, d: 0.07 }, { f: 330, d: 0.07 }, { f: 262, d: 0.14 }], gain: 0.11, type: 'triangle' },
+  fishCatch:       { notes: [{ f: 523, d: 0.06 }, { f: 659, d: 0.06 }, { f: 784, d: 0.06 }, { f: 1047, d: 0.18 }], gain: 0.13, type: 'pulse' },
+  rhythmPerfect:   { notes: [{ f: 1319, d: 0.03 }], gain: 0.06, type: 'pulse' },
+  rhythmGood:      { notes: [{ f: 988, d: 0.03 }], gain: 0.05, type: 'square' },
+  rhythmMiss:      { notes: [{ f: 140, d: 0.06 }], gain: 0.09, type: 'square' },
+  rhythmCombo:     { notes: [{ f: 1047, d: 0.04 }, { f: 1319, d: 0.04 }, { f: 1397, d: 0.08 }], gain: 0.08, type: 'pulse' },
+  rhythmClear:     { notes: [{ f: 784, d: 0.08 }, { f: 1047, d: 0.08 }, { f: 1319, d: 0.08 }, { f: 1047, d: 0.08 }, { f: 1319, d: 0.24 }], gain: 0.13, type: 'pulse' },
+  rallyPickup:     { notes: [{ f: 880, d: 0.03 }, { f: 1320, d: 0.05 }], gain: 0.1, type: 'pulse' },
+  rallyCrash:      { notes: [{ f: 180, d: 0.06 }, { f: 120, d: 0.12 }], gain: 0.15, type: 'square' },
+  rallyLap:        { notes: [{ f: 659, d: 0.07 }, { f: 880, d: 0.07 }, { f: 1319, d: 0.2 }], gain: 0.13, type: 'pulse' },
+  rallyGlitch:     { notes: [{ f: 1300, d: 0.02, gap: 0.02 }, { f: 200, d: 0.02, gap: 0.02 }, { f: 1100, d: 0.02, gap: 0.02 }, { f: 260, d: 0.04 }], gain: 0.1, type: 'square' },
+  rallyTick:       { notes: [{ f: 1000, d: 0.02 }], gain: 0.06, type: 'square' },
+
   // One ring cycle each; Calls.js repeats them while the phone rings
   ring_mum:        { notes: [{ f: 880, d: 0.05, gap: 0.01 }, { f: 1047, d: 0.05, gap: 0.01 }, { f: 880, d: 0.05, gap: 0.01 }, { f: 1047, d: 0.05, gap: 0.01 }, { f: 880, d: 0.05, gap: 0.01 }, { f: 1047, d: 0.05, gap: 0.01 }, { f: 880, d: 0.05, gap: 0.01 }, { f: 1047, d: 0.05 }], gain: 0.12, type: 'square' },
   ring_dex:        { notes: [{ f: 659, d: 0.09 }, { f: 659, d: 0.09 }, { f: 784, d: 0.09 }, { f: 659, d: 0.09 }, { f: 587, d: 0.09 }, { f: 523, d: 0.18 }], gain: 0.13, type: 'square' },
@@ -183,6 +213,22 @@ export function play(name, opts) {
     if (name === 'simonTone') return simonTone(opts && opts.cell);
     if (NOISE[name]) return fireNoise(name);
     return firePhrase(name);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * A one-off tone at any pitch (fishing proximity buzz, rhythm taps).
+ * Gated like every other sound; name is used for throttling and the log.
+ */
+export function tone(name, freq, dur = 0.06, type = 'square', gain = 0.1) {
+  try {
+    const throttleMs = THROTTLE[name] || 0;
+    if (!canPlay(name, { allowWhenPaused: false, throttleMs })) return false;
+    beep(freq, dur, type, gain);
+    logSfx(name);
+    return true;
   } catch {
     return false;
   }
@@ -352,6 +398,7 @@ export default {
   initSfx,
   play,
   playEnd,
+  tone,
   menuMove,
   menuSelect,
   back,

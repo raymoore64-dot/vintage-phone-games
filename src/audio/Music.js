@@ -289,6 +289,97 @@ const SONGS = {
   }
 };
 
+
+/*
+ * Compact score notation for the batch C tracks: bars split by '|',
+ * tokens 'C5-2' (note, length in 16th steps) or '.' (16th rest). Each
+ * bar is padded / trimmed to 16 steps.
+ */
+function seq(str) {
+  const out = [];
+  str.split('|').map((b) => b.trim()).filter(Boolean).forEach((bar) => {
+    const steps = [];
+    bar.split(/\s+/).forEach((tok) => {
+      if (tok === '.') { steps.push(null); return; }
+      const m = /^([A-G][#b]?-?\d)-(\d+)$/.exec(tok);
+      if (!m) { steps.push(null); return; }
+      const l = parseInt(m[2], 10);
+      steps.push({ n: m[1], l });
+      for (let i = 1; i < l; i++) steps.push(null);
+    });
+    while (steps.length < 16) steps.push(null);
+    out.push(...steps.slice(0, 16));
+  });
+  return out;
+}
+
+function track(bpm, swing, lead, bass, hat, opts = {}) {
+  const leadNotes = seq(lead);
+  return {
+    bpm,
+    length: leadNotes.length,
+    swing,
+    name: opts.name,
+    lead: { wave: opts.wave || 'square', gain: opts.gain || 0.42, artic: opts.artic || 0.86, notes: leadNotes },
+    bass: { wave: 'triangle', gain: 0.78, artic: 0.95, notes: seq(bass) },
+    hat: hats(hat, leadNotes.length / 16)
+  };
+}
+
+/*
+ * Batch C: loops for the WAP games plus four original ringtones that
+ * Ring Rhythm charts from (the menu theme 'Lobby Glow' is the fifth).
+ */
+const BATCH_C = {
+  // "Tower Hop" — D major, bouncy
+  hopper: track(132, 0.04,
+    '| D5-2 F#5-2 A5-2 F#5-2 D5-2 E5-2 F#5-4 | G5-2 F#5-2 E5-2 D5-2 E5-4 A4-4 | D5-2 F#5-2 A5-2 B5-2 A5-2 F#5-2 D5-4 | E5-2 G5-2 F#5-2 E5-2 D5-8 |',
+    '| D3-2 A2-2 D3-2 A2-2 D3-2 A2-2 D3-2 A2-2 | G2-2 D3-2 G2-2 D3-2 A2-2 E3-2 A2-2 E3-2 | D3-2 A2-2 D3-2 A2-2 B2-2 F#3-2 B2-2 F#3-2 | G2-2 D3-2 A2-2 E3-2 D3-4 A2-4 |',
+    HAT_A),
+  // "Still Water" — A minor, slow and calm
+  fishing: track(76, 0.1,
+    '| A4-6 C5-2 E5-8 | D5-6 C5-2 B4-8 | A4-4 G4-4 E4-8 | F4-4 G4-4 A4-8 |',
+    '| A2-8 E2-8 | D2-8 G2-8 | C2-8 E2-8 | F2-8 E2-8 |',
+    HAT_SPARSE, { wave: 'triangle', gain: 0.5 }),
+  // "Pick a Tone" — the Ring Rhythm select screen
+  rhythm: track(120, 0.12,
+    '| C5-1 . C5-1 . Eb5-2 C5-2 G5-2 F5-2 Eb5-2 C5-2 | Bb4-2 C5-2 . . Eb5-2 F5-4 G5-4 | C5-1 . C5-1 . Eb5-2 C5-2 G5-2 Bb5-2 G5-2 F5-2 | Eb5-2 F5-2 Eb5-2 C5-2 C5-8 |',
+    '| C3-4 C3-4 Eb3-4 F3-4 | Bb2-4 Bb2-4 C3-8 | C3-4 C3-4 Eb3-4 G3-4 | Ab2-4 Bb2-4 C3-8 |',
+    HAT_B),
+  // "Fifty-Six K" — E minor, driving
+  rally: track(150, 0,
+    '| E5-2 E5-2 G5-2 E5-2 A5-2 G5-2 E5-2 D5-2 | E5-2 E5-2 G5-2 B5-2 A5-4 G5-4 | C6-2 B5-2 A5-2 G5-2 A5-2 G5-2 E5-2 D5-2 | E5-4 B4-4 E5-8 |',
+    '| E2-2 E3-2 E2-2 E3-2 E2-2 E3-2 E2-2 E3-2 | C2-2 C3-2 C2-2 C3-2 D2-2 D3-2 D2-2 D3-2 | A1-2 A2-2 A1-2 A2-2 C2-2 C3-2 C2-2 C3-2 | B1-2 B2-2 B1-2 B2-2 E2-4 E2-4 |',
+    HAT_A),
+  // ---- Ringtones ----
+  ring_polka: track(132, 0,
+    '| C5-2 E5-2 G5-2 E5-2 C5-2 E5-2 G5-4 | F5-2 D5-2 B4-2 D5-2 F5-2 D5-2 B4-4 | C5-2 E5-2 G5-2 C6-2 B5-2 A5-2 G5-4 | F5-2 E5-2 D5-2 B4-2 C5-8 |',
+    '| C3-4 G2-4 C3-4 G2-4 | G2-4 D3-4 G2-4 D3-4 | C3-4 G2-4 A2-4 E2-4 | F2-4 G2-4 C3-8 |',
+    HAT_A, { name: 'Pocket Polka' }),
+  ring_neon: track(140, 0,
+    '| A4-1 . A5-1 . E5-1 . A4-1 C5-1 . E5-1 . G5-2 E5-2 . | F5-1 . F5-1 . C5-1 . A4-1 . F5-2 E5-2 D5-2 C5-2 | A4-1 . A5-1 . E5-1 . A4-1 C5-1 . E5-1 . G5-2 B5-2 . | A5-2 G5-2 E5-2 D5-2 E5-4 A4-4 |',
+    '| A2-4 A2-4 E2-4 E2-4 | F2-4 F2-4 C2-4 C2-4 | A2-4 A2-4 G2-4 G2-4 | D2-4 E2-4 A2-8 |',
+    HAT_B, { name: 'Neon Bleep', wave: 'square' }),
+  ring_bossa: track(112, 0.06,
+    '| G4-3 B4-3 D5-2 E5-3 D5-3 B4-2 | A4-3 C5-3 E5-2 D5-8 | G4-3 B4-3 D5-2 G5-3 F#5-3 E5-2 | D5-3 C5-3 A4-2 G4-8 |',
+    '| G2-3 D3-3 G2-2 C3-3 G2-3 C3-2 | A2-3 E3-3 A2-2 D3-8 | G2-3 D3-3 G2-2 E2-3 B2-3 E3-2 | D2-3 A2-3 D3-2 G2-8 |',
+    HAT_SPARSE, { name: 'Bus Stop Bossa', wave: 'triangle', gain: 0.55 }),
+  ring_blues: track(96, 0.2,
+    '| C5-3 Eb5-1 F5-2 F#5-1 G5-3 Bb5-2 G5-4 | F5-3 Eb5-1 C5-4 Bb4-2 C5-6 | Eb5-3 F5-1 G5-2 Bb5-2 C6-4 Bb5-4 | G5-2 F5-2 Eb5-2 C5-2 C5-8 |',
+    '| C3-2 E3-2 G3-2 A3-2 Bb3-2 A3-2 G3-2 E3-2 | F2-2 A2-2 C3-2 D3-2 Eb3-2 D3-2 C3-2 A2-2 | C3-2 E3-2 G3-2 A3-2 Bb3-2 A3-2 G3-2 E3-2 | G2-2 B2-2 D3-2 F3-2 C3-8 |',
+    HAT_SPARSE, { name: 'Low Battery Blues' })
+};
+Object.assign(SONGS, BATCH_C);
+
+/** Ring Rhythm's tracks: four ringtones + the menu theme. */
+export const RINGTONES = [
+  { id: 'ring_polka', name: 'Pocket Polka' },
+  { id: 'ring_neon', name: 'Neon Bleep' },
+  { id: 'ring_bossa', name: 'Bus Stop Bossa' },
+  { id: 'ring_blues', name: 'Low Battery Blues' },
+  { id: 'menu', name: 'Lobby Glow (menu)' }
+];
+
 const SCENE_TRACKS = {
   MenuScene: 'menu',
   SkinScene: 'menu',
@@ -297,7 +388,11 @@ const SCENE_TRACKS = {
   ImpactScene: 'impact',
   BricksScene: 'bricks',
   BlocksScene: 'blocks',
-  SimonScene: 'simon'
+  SimonScene: 'simon',
+  HopperScene: 'hopper',
+  FishingScene: 'fishing',
+  RhythmScene: 'rhythm',
+  RallyScene: 'rally'
 };
 
 let enabled = true;
@@ -311,6 +406,8 @@ let duckGain = null;
 let duckLevel = 1;
 let hatBuffer = null;
 let playing = false;
+let originTime = 0;   // AudioContext time of step 0 of the current play-through
+let absStep = 0;      // steps scheduled since originTime
 const holds = new Set();
 const live = new Set();
 const musicListeners = new Set();
@@ -509,6 +606,7 @@ function scheduler() {
     const swing = (currentStep % 2 === 1) ? (song.swing || 0) * stepDur : 0;
     triggerStep(song, currentStep, nextNoteTime + swing, stepDur);
     nextNoteTime += stepDur;
+    absStep += 1;
     currentStep = (currentStep + 1) % length;
   }
 }
@@ -550,8 +648,11 @@ function startTrack(id, fromTop = true) {
     currentId = id;
     currentStep = 0;
     nextNoteTime = liveCtx.currentTime + 0.06;
+    absStep = 0;
+    originTime = nextNoteTime;
   } else if (!playing) {
     nextNoteTime = liveCtx.currentTime + 0.06;
+    originTime = nextNoteTime - absStep * (60 / song.bpm / 4);
   }
   if (id !== 'simon') applyDuck(1, 0.04);
   startScheduler();
@@ -586,6 +687,31 @@ export function enter(trackId) {
   if (holds.size > 0) return true;
   if (playing && currentId === id) return true;
   return startPending();
+}
+
+/**
+ * Where the music is, in AudioContext time (Ring Rhythm syncs to this).
+ * Step s of loop k sounds at origin + (k * length + s) * stepDur
+ * (+ swing * stepDur on odd steps). null when nothing is playing.
+ */
+export function transport() {
+  const c = getAudioContext();
+  const song = currentId ? SONGS[currentId] : null;
+  if (!c || !song || !playing || c.state !== 'running') return null;
+  return {
+    id: currentId,
+    bpm: song.bpm,
+    length: song.length || 32,
+    stepDur: 60 / song.bpm / 4,
+    swing: song.swing || 0,
+    origin: originTime,
+    now: c.currentTime
+  };
+}
+
+/** Song data (read-only use: Ring Rhythm builds its chart from it). */
+export function getSong(id) {
+  return SONGS[id] || null;
 }
 
 export function playForScene(sceneKey) {
@@ -696,6 +822,7 @@ function publishApi() {
       label: musicLabel,
       getPref: getMusicPref,
       probe,
+      transport,
       songs: () => Object.keys(SONGS)
     };
     window.__vpg.music = api;
@@ -746,6 +873,9 @@ export const SONG_IDS = Object.keys(SONGS);
 export const SCENE_TO_TRACK = SCENE_TRACKS;
 
 export default {
+  transport,
+  getSong,
+  RINGTONES,
   initMusic,
   enter,
   playForScene,

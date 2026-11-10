@@ -21,7 +21,12 @@ export const GAME_INFO = {
   impact: { name: 'Space Impact', scene: 'ImpactScene' },
   bricks: { name: 'Bricks', scene: 'BricksScene' },
   blocks: { name: 'Blocks', scene: 'BlocksScene' },
-  simon: { name: 'Simon', scene: 'SimonScene' }
+  simon: { name: 'Simon', scene: 'SimonScene' },
+  // WAP download games (dares only offered once downloaded)
+  hopper: { name: 'Signal Hopper', scene: 'HopperScene' },
+  fishing: { name: 'Buzz Fishing', scene: 'FishingScene' },
+  rhythm: { name: 'Ring Rhythm', scene: 'RhythmScene' },
+  rally: { name: 'Dial-Up Rally', scene: 'RallyScene' }
 };
 
 // First launch, delivered in this order.
@@ -56,7 +61,20 @@ export const DARES = [
     win: 'Well done love! {score} on Simon. Dad is very proud. Here is +{bonus} pts. Mum x' },
   { game: 'impact', target: 250, from: 'dex', bonus: 150,
     text: 'quick 1: {target} in Space Impact. warm up dare. ez',
-    win: '{score}. yeh yeh ez 4 u. +{bonus} pts' }
+    win: '{score}. yeh yeh ez 4 u. +{bonus} pts' },
+  // WAP games (only picked when downloaded)
+  { game: 'hopper', target: 600, from: 'kaz', bonus: 250, wap: true,
+    text: 'Signal Hopper: get {target}. my signal at home is 1 bar so i cant lol',
+    win: '{score} hops of pure signal!! u r a human mast. +{bonus} pts' },
+  { game: 'fishing', target: 300, from: 'dex', bonus: 250, wap: true,
+    text: 'fishin trip! {target} pts in Buzz Fishing or ur on bait duty',
+    win: '{score}?! ok master angler. +{bonus} pts. i will dig the worms' },
+  { game: 'rhythm', target: 1500, from: 'kaz', bonus: 250, wap: true,
+    text: 'Ring Rhythm: {target} pts. i did it to my own ringtone obvs',
+    win: '{score}! ur thumbs have RHYTHM. +{bonus} pts x' },
+  { game: 'rally', target: 2000, from: 'dex', bonus: 300, wap: true,
+    text: 'Dial-Up Rally. {target} pts. on 56k. no excuses',
+    win: '{score} pts and u didnt even buffer. +{bonus} pts m8' }
 ];
 
 // Lifetime points milestones.

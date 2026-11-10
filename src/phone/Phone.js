@@ -307,6 +307,22 @@ export function buzz() {
   }
 }
 
+/**
+ * Vibrate the real device if it can (Android browsers; iOS ignores it).
+ * Only after a user gesture so browsers don't log interventions.
+ * Returns true if a vibration was requested.
+ */
+export function vibrate(pattern) {
+  window.__vpgVibes = (window.__vpgVibes || 0) + 1;
+  try {
+    const ua = navigator.userActivation;
+    if (navigator.vibrate && (!ua || ua.hasBeenActive)) return !!navigator.vibrate(pattern);
+  } catch {
+    // not supported
+  }
+  return false;
+}
+
 // ---- Init -----------------------------------------------------------------
 
 export function initPhone(g) {
@@ -356,6 +372,7 @@ export function isRescuing() {
 }
 
 export default {
+  vibrate,
   initPhone, batteryLevel, isRescuing, drain, addReceiveGate, batteryBars, signalBars, getActivity, hour, isNight,
   canReceive, setUnreadSource, onTick, render, toast, buzz, GAME_SCENES
 };
