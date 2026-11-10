@@ -74,7 +74,8 @@ export function attachPause(scene) {
     timers: [],
     shutdown: false,
     pausedAccum: 0,
-    pauseStartedAt: 0
+    pauseStartedAt: 0,
+    held: null
   };
 
   // Swallow clicks on the dim so they don't reach the game underneath.
@@ -197,6 +198,7 @@ export function attachPause(scene) {
 
   function requestResume() {
     if (state.shutdown) return;
+    if (state.held) return;
     if (state.countdown) return;
     if (!state.paused) return;
     state.paused = false;
@@ -236,6 +238,7 @@ export function attachPause(scene) {
 
   function toMenu() {
     if (state.shutdown) return;
+    state.held = null;
     clearTimers();
     state.paused = false;
     state.countdown = false;
@@ -248,8 +251,39 @@ export function attachPause(scene) {
     scene.scene.start('MenuScene');
   }
 
+  /*
+   * hold(reason): freeze the game with no pause panel (incoming call, power
+   * off). releaseHold(): drop the hold and run the normal 3-2-1 countdown.
+   * The pausable clock (gameNow) stops while held, exactly like a pause.
+   */
+  function hold(reason = 'call') {
+    if (state.shutdown || scene.alive === false) return false;
+    if (state.held) return true;
+    if (state.countdown) {
+      clearTimers();
+      state.countdown = false;
+    }
+    if (!state.paused) state.savedSoft = getSoftKeys();
+    state.paused = true;
+    state.held = reason;
+    freezeClock();
+    hideVisual();
+    publish(ctl);
+    Music.pause('game');
+    return true;
+  }
+
+  function releaseHold({ countdown = true } = {}) {
+    if (state.shutdown || !state.held) return;
+    state.held = null;
+    if (countdown) requestResume();
+    else showPausedVisual();
+    publish(ctl);
+  }
+
   function autoPause() {
     if (state.shutdown || scene.alive === false) return;
+    if (state.held) return;
     if (state.paused && !state.countdown) return;
     if (state.countdown) {
       clearTimers();
@@ -268,6 +302,9 @@ export function attachPause(scene) {
   const ctl = {
     isFrozen: () => state.paused || state.countdown,
     isPaused: () => state.paused,
+    isHeld: () => !!state.held,
+    hold,
+    releaseHold,
     isCountdown: () => state.countdown,
     clockNow: (raw = scene.time.now) => {
       let adj = raw - state.pausedAccum;
@@ -281,6 +318,7 @@ export function attachPause(scene) {
     toMenu,
     probe: () => ({
       paused: state.paused,
+      held: state.held,
       countdown: state.countdown,
       frozen: state.paused || state.countdown,
       countText: title.visible ? title.text : null,

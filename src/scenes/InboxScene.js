@@ -12,7 +12,7 @@ import { GAME_INFO } from '../phone/messages.js';
  *   List:  ▲▼ choose · OK / left soft open · C / right soft back to menu
  *   Read:  ▲▼ scroll long texts · ◀▶ previous / next text
  *          OK on an open dare = play that game now · C back to the list
- *   0 sound · 9 music (same as the menu)
+ *   0 sound · 9 music (same as the menu) · * code book
  */
 
 const LIST_TOP = 52;
@@ -47,6 +47,7 @@ export default class InboxScene extends Phaser.Scene {
       digit: (d) => {
         if (d === '0') Sfx.toggleMuteWithClick();
         else if (d === '9') Music.toggle();
+        else if (d === '*') { Sfx.menuSelect(); this.scene.start('CodeBookScene', { from: 'inbox' }); }
       }
     });
 
@@ -224,6 +225,8 @@ export default class InboxScene extends Phaser.Scene {
         tag = ds === 'done' ? '[DARE ✓] ' : ds === 'open' ? '[DARE] ' : '[DARE x] ';
       } else if (m.code) {
         tag = '[CODE] ';
+      } else if (m.missed) {
+        tag = '[MISSED] ';
       }
       const raw = tag + m.text;
       const preview = raw.length > 36 ? `${raw.slice(0, 35)}…` : raw;
@@ -240,7 +243,7 @@ export default class InboxScene extends Phaser.Scene {
       this.add.text(352, LIST_TOP + VISIBLE * ROW_H - 14, '▼', { fontSize: '12px', color: pal.accent, fontFamily: 'monospace' }).setOrigin(1, 0);
     }
 
-    this.add.text(180, 440, unread ? `${unread} unread` : 'All read', {
+    this.add.text(180, 440, `${unread ? `${unread} unread` : 'All read'} · * code book`, {
       fontSize: '13px', color: pal.accent, fontFamily: 'monospace', fontStyle: 'bold'
     }).setOrigin(0.5);
     this.add.text(180, 462, '▲▼ choose · OK read · C back', {

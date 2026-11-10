@@ -46,6 +46,16 @@ const muteListeners = new Set();
 const unlockListeners = new Set();
 let muteToggleFn = null;
 let musicActiveFn = null;
+let silenced = false;
+
+/** Phone powered off: every effect is blocked without touching the mute pref. */
+export function setSilenced(on) {
+  silenced = !!on;
+}
+
+export function isSilenced() {
+  return silenced;
+}
 
 /** Let Sfx replace the M-key action (e.g. to play a confirmation click). */
 export function setMuteToggleHandler(fn) {
@@ -318,7 +328,7 @@ function gameIsFrozen() {
  * allowWhenPaused: pause / resume / countdown ticks (and mute feedback).
  */
 export function canPlay(name, { allowWhenPaused = false, throttleMs = 0 } = {}) {
-  if (!unlocked || muted) return false;
+  if (!unlocked || muted || silenced) return false;
   if (typeof document !== 'undefined' && document.hidden && !allowWhenPaused) return false;
   if (!allowWhenPaused && gameIsFrozen()) return false;
   if (voiceCount >= MAX_VOICES) return false;

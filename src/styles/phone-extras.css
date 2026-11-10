@@ -1,0 +1,306 @@
+/*
+ * Batch A styles: power / boot screens, incoming calls, T9 egg LCD modes
+ * and wear & tear. Everything is sized in --u like index.html, and every
+ * colour comes from the current skin palette (set as CSS vars by JS).
+ * 1u = 10 canvas px inside the 36u x 48u LCD.
+ */
+
+/* ---- Power: standby / boot / PIN / shutdown / off ------------------------ */
+.power-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 1.2);
+  background: var(--pbg, #000);
+  color: var(--pfg, #0f8);
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  text-align: center;
+  overflow: hidden;
+  cursor: pointer;
+}
+.power-screen.show { display: flex; }
+.power-screen .pw-logo { width: calc(var(--u) * 22); }
+.power-screen .pw-logo svg { display: block; width: 100%; height: auto; overflow: visible; }
+.power-screen .pw-logo svg * { transform-box: fill-box; transform-origin: center; }
+.power-screen .pw-brand {
+  font-size: calc(var(--u) * 3.4);
+  letter-spacing: calc(var(--u) * 0.7);
+  color: var(--pfg);
+  animation: pw-brand 900ms ease-out 500ms both;
+}
+.power-screen .pw-tag { font-size: calc(var(--u) * 1.5); color: var(--pacc); animation: pw-fade-in 500ms ease-out 1100ms both; }
+.power-screen .pw-skip {
+  position: absolute;
+  bottom: calc(var(--u) * 4.6);
+  font-size: calc(var(--u) * 1.3);
+  color: var(--pdim);
+}
+.power-screen .pw-press {
+  margin-top: calc(var(--u) * 2);
+  font-size: calc(var(--u) * 1.9);
+  color: var(--pwarn);
+  animation: pw-blink 1.1s steps(2, start) infinite;
+}
+.power-screen .faint { opacity: 0.35; animation: none; }
+@keyframes pw-brand { from { opacity: 0; letter-spacing: calc(var(--u) * 2.2); } to { opacity: 1; } }
+@keyframes pw-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pw-blink { to { opacity: 0.25; } }
+
+.power-screen .pw-card {
+  width: 78%;
+  padding: calc(var(--u) * 2) calc(var(--u) * 1.5);
+  background: var(--ppanel);
+  border: calc(var(--u) * 0.3) solid var(--pfg);
+  border-radius: calc(var(--u) * 0.8);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 1.1);
+}
+.power-screen .pw-icon { font-size: calc(var(--u) * 3.4); color: var(--pwarn); letter-spacing: calc(var(--u) * -0.4); }
+.power-screen .pw-title { font-size: calc(var(--u) * 2.6); color: var(--pfg); }
+.power-screen .pw-sub { font-size: calc(var(--u) * 1.6); color: var(--ptext); }
+.power-screen .pw-pin { display: flex; justify-content: center; gap: calc(var(--u) * 1.4); font-size: calc(var(--u) * 3.6); color: var(--pdim); }
+.power-screen .pw-pin .on { color: var(--pfg); }
+
+.power-screen.shutdown .pw-logo,
+.power-screen.shutdown .pw-brand { animation: pw-shutdown 1.25s ease-in both; }
+@keyframes pw-shutdown {
+  0% { opacity: 1; transform: scale(1); }
+  60% { opacity: 1; transform: scale(0.96); }
+  100% { opacity: 0; transform: scale(0.7, 0.02); }
+}
+.power-screen.off { background: #020302; cursor: default; }
+.power-screen .pw-offhint {
+  position: absolute;
+  bottom: calc(var(--u) * 2);
+  font-size: calc(var(--u) * 1.3);
+  color: #3a3f3a;
+  opacity: 0;
+  animation: pw-fade-in 600ms ease-out 3s forwards;
+}
+.power-screen .pw-offhint .d { display: none; }
+@media (hover: hover) and (pointer: fine) {
+  .power-screen .pw-offhint .t { display: none; }
+  .power-screen .pw-offhint .d { display: inline; }
+}
+
+/* Per-brand boot marks (original abstract art, see brandLogos.js) */
+.b-linicro .hl, .b-linicro .hr { fill: none; stroke: var(--pfg); stroke-width: 6; stroke-linecap: round; }
+.b-linicro .hl { animation: lin-l 900ms cubic-bezier(.2, .8, .3, 1) both; }
+.b-linicro .hr { animation: lin-r 900ms cubic-bezier(.2, .8, .3, 1) both; }
+.b-linicro .dot { fill: var(--pwarn); animation: pop 300ms ease-out 850ms both; }
+@keyframes lin-l { from { transform: translateX(-40%); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes lin-r { from { transform: translateX(40%); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes pop { from { transform: scale(0); } 70% { transform: scale(1.4); } to { transform: scale(1); } }
+
+.b-purplex .stem { fill: none; stroke: var(--pacc); stroke-width: 3; stroke-linecap: round; }
+.b-purplex .g { fill: var(--pfg); animation: pop 320ms ease-out both; }
+.b-purplex .g1 { animation-delay: 100ms; } .b-purplex .g2 { animation-delay: 220ms; } .b-purplex .g3 { animation-delay: 340ms; }
+.b-purplex .g4 { animation-delay: 460ms; } .b-purplex .g5 { animation-delay: 580ms; } .b-purplex .g6 { animation-delay: 700ms; }
+
+.b-glacio .flake path { fill: none; stroke: var(--pfg); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 160; animation: draw 1.1s ease-out both; }
+.b-glacio .flake { animation: spin-in 1.4s ease-out both; }
+@keyframes draw { from { stroke-dashoffset: 160; } to { stroke-dashoffset: 0; } }
+@keyframes spin-in { from { transform: rotate(-60deg); } to { transform: none; } }
+
+.b-rubytel .facet { fill: var(--pfg); }
+.b-rubytel .cut { fill: none; stroke: var(--pbg); stroke-width: 2; }
+.b-rubytel .gem { animation: gem-spin 1s ease-out both; }
+@keyframes gem-spin { 0% { transform: scaleX(0.05); } 30% { transform: scaleX(1); } 50% { transform: scaleX(0.05); } 80%, 100% { transform: scaleX(1); } }
+
+.b-solara .sun { fill: var(--pwarn); animation: rise 1s ease-out both; }
+.b-solara .rays { fill: none; stroke: var(--pwarn); stroke-width: 3; stroke-linecap: round; animation: pw-fade-in 500ms ease-out 800ms both; }
+.b-solara .horizon { fill: var(--pfg); }
+@keyframes rise { from { transform: translateY(60%); opacity: 0.3; } to { transform: none; opacity: 1; } }
+
+.b-mintra .leaf { fill: var(--pfg); animation: sway 1.2s ease-in-out both; }
+.b-mintra .vein { fill: none; stroke: var(--pbg); stroke-width: 2; stroke-linecap: round; }
+.b-mintra .bub { fill: var(--pacc); animation: bubble 1.4s ease-out infinite; }
+.b-mintra .b2 { animation-delay: 300ms; } .b-mintra .b3 { animation-delay: 600ms; }
+@keyframes sway { 0% { transform: rotate(-30deg) scale(0.4); opacity: 0; } 50% { transform: rotate(12deg); opacity: 1; } 100% { transform: none; } }
+@keyframes bubble { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-160%); opacity: 0; } }
+
+.b-aurum .ring { fill: none; stroke: var(--pwarn); stroke-width: 3; stroke-dasharray: 180; animation: draw-ring 1s ease-out both; }
+.b-aurum .mono { fill: none; stroke: var(--pfg); stroke-width: 5; stroke-linejoin: round; animation: pw-fade-in 500ms ease-out 600ms both; }
+.b-aurum .sweep { fill: #fff; opacity: 0.22; animation: sweep 1.2s ease-in-out 900ms both; }
+@keyframes draw-ring { from { stroke-dashoffset: 180; } to { stroke-dashoffset: 0; } }
+@keyframes sweep { from { transform: translateX(0) skewX(-20deg); } to { transform: translateX(800%) skewX(-20deg); } }
+
+.b-volta .bolt { fill: var(--pwarn); filter: drop-shadow(0 0 4px var(--pwarn)); animation: neon 1.1s steps(1) both; }
+@keyframes neon { 0% { opacity: 0; } 10% { opacity: 1; } 18% { opacity: 0.1; } 26% { opacity: 1; } 34% { opacity: 0.2; } 50%, 100% { opacity: 1; } }
+
+.b-proto .cube path { fill: none; stroke: var(--pfg); stroke-width: 2.5; stroke-linejoin: round; }
+.b-proto .cube .hid { stroke-dasharray: 3 3; opacity: 0.6; }
+.b-proto .cube { animation: glitch-in 900ms steps(8) both; }
+@keyframes glitch-in {
+  0% { transform: translate(-12%, 0) skewX(30deg); opacity: 0.2; }
+  25% { transform: translate(9%, 4%); opacity: 1; }
+  50% { transform: translate(-5%, -3%) skewX(-12deg); }
+  75% { transform: translate(3%, 0); }
+  100% { transform: none; opacity: 1; }
+}
+
+/* ---- Incoming call ------------------------------------------------------- */
+.call-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: calc(var(--u) * 2.2) calc(var(--u) * 2) calc(var(--u) * 2);
+  gap: calc(var(--u) * 0.9);
+  background: var(--cbg);
+  color: var(--ctext);
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  text-align: center;
+}
+.call-screen .cs-top { font-size: calc(var(--u) * 1.9); color: var(--cwarn); letter-spacing: calc(var(--u) * 0.1); }
+.call-screen.ringing .cs-top { animation: pw-blink 0.7s steps(2, start) infinite; }
+.call-screen .cs-avatar {
+  width: calc(var(--u) * 9);
+  height: calc(var(--u) * 9);
+  margin-top: calc(var(--u) * 1);
+  border-radius: 50%;
+  border: calc(var(--u) * 0.4) solid var(--cfg);
+  background: var(--cpanel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(var(--u) * 5);
+  color: var(--cfg);
+}
+.call-screen.ringing .cs-avatar { animation: cs-pulse 0.95s ease-in-out infinite; }
+@keyframes cs-pulse { 50% { transform: scale(1.08); box-shadow: 0 0 calc(var(--u) * 2) var(--cfg); } }
+.call-screen .cs-name { font-size: calc(var(--u) * 3.2); color: var(--cfg); }
+.call-screen .cs-num { font-size: calc(var(--u) * 1.6); color: var(--cdim); }
+.call-screen .cs-waves { display: flex; gap: calc(var(--u) * 0.8); height: calc(var(--u) * 2); align-items: center; }
+.call-screen .cs-waves i {
+  display: block;
+  width: calc(var(--u) * 1.2);
+  height: calc(var(--u) * 1.2);
+  border-radius: 50%;
+  background: var(--cacc);
+  opacity: 0.3;
+}
+.call-screen.ringing .cs-waves i { animation: cs-wave 0.9s ease-in-out infinite; }
+.call-screen.ringing .cs-waves i:nth-child(2) { animation-delay: 150ms; }
+.call-screen.ringing .cs-waves i:nth-child(3) { animation-delay: 300ms; }
+@keyframes cs-wave { 50% { opacity: 1; transform: scale(1.3); } }
+.call-screen.talking .cs-waves { display: none; }
+.call-screen.talking .cs-avatar { width: calc(var(--u) * 6); height: calc(var(--u) * 6); font-size: calc(var(--u) * 3.2); margin-top: 0; }
+.call-screen .cs-body {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 0.8);
+  overflow: hidden;
+  font-size: calc(var(--u) * 1.6);
+  line-height: 1.25;
+}
+.call-screen .cs-body p {
+  margin: 0;
+  padding: calc(var(--u) * 0.6) calc(var(--u) * 0.9);
+  border-radius: calc(var(--u) * 0.6);
+  background: var(--cpanel);
+  text-align: left;
+  animation: pw-fade-in 250ms ease-out both;
+}
+.call-screen .cs-body p.me { align-self: flex-end; color: var(--cacc); text-align: right; }
+.call-screen .cs-btns { display: flex; gap: calc(var(--u) * 1.4); width: 100%; justify-content: center; }
+.call-screen .cs-btns button {
+  flex: 1;
+  max-width: calc(var(--u) * 14);
+  padding: calc(var(--u) * 1) 0;
+  border: none;
+  border-radius: calc(var(--u) * 0.8);
+  font-family: inherit;
+  font-weight: bold;
+  font-size: calc(var(--u) * 1.8);
+  cursor: pointer;
+  touch-action: none;
+}
+.call-screen .cs-ans { background: var(--cfg); color: var(--cbg); }
+.call-screen .cs-dec { background: var(--cdanger); color: var(--cbg); }
+.call-screen.ended { justify-content: center; }
+.call-screen .cs-end { font-size: calc(var(--u) * 2.6); color: var(--cwarn); line-height: 1.4; }
+
+.phone.ringing { animation: phone-ring 0.95s linear infinite; }
+@keyframes phone-ring {
+  0%, 52%, 100% { transform: none; }
+  4%, 12%, 20%, 28%, 36%, 44% { transform: translate(calc(var(--u) * -0.35), 0) rotate(-0.7deg); }
+  8%, 16%, 24%, 32%, 40%, 48% { transform: translate(calc(var(--u) * 0.35), 0) rotate(0.7deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .phone.ringing, .call-screen .cs-avatar { animation: none !important; }
+}
+
+/* ---- T9 egg LCD modes ---------------------------------------------------- */
+.screen.egg-disco #game-container > canvas { animation: egg-disco 1.8s linear infinite; }
+@keyframes egg-disco {
+  from { filter: hue-rotate(0deg) saturate(1.7); }
+  to { filter: hue-rotate(360deg) saturate(1.7); }
+}
+.screen.egg-flip #game-container > canvas { transform: rotate(180deg); }
+.lcd-fat {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  pointer-events: none;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+.lcd-fat.on { display: block; }
+
+/* ---- Wear & tear --------------------------------------------------------- */
+.phone > .wear-shell {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: inherit;
+  overflow: hidden;
+}
+.wear-shell svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.wear-shell path {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.55);
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+}
+.wear-shell .w-scuff, .wear-shell .w-scratch { filter: drop-shadow(0 0.5px 0 rgba(0, 0, 0, 0.45)); }
+.wear-shell .w-scuff { position: absolute; width: calc(var(--u) * 2.2); height: calc(var(--u) * 3); opacity: 0.6; }
+.wear-shell .w-scratch { position: absolute; left: 60%; width: 36%; height: calc(var(--u) * 2.2); opacity: 0.65; }
+.wear-shell .w-scratch .thin { stroke: rgba(255, 255, 255, 0.3); }
+
+.phone.wear-keys .keypad .key { background-image: radial-gradient(ellipse at 50% 38%, rgba(255, 255, 255, 0.2), transparent 62%), var(--key-bg); }
+.phone.wear-keys .keypad .key small { opacity: 0.4; }
+.phone.wear-keys .keypad .key[data-key="d5"],
+.phone.wear-keys .keypad .key[data-key="d2"] { background-image: radial-gradient(ellipse at 50% 40%, rgba(255, 255, 255, 0.32), transparent 65%), var(--key-bg); }
+.phone.wear-keys .ok { background-image: radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.28), transparent 60%), var(--ok-bg); }
+.phone.wear-keys .call { background-image: radial-gradient(ellipse at 50% 40%, rgba(255, 255, 255, 0.22), transparent 62%), var(--call-bg); }
+.phone.wear-keys .soft { background-image: radial-gradient(ellipse at 50% 40%, rgba(255, 255, 255, 0.18), transparent 62%), var(--key-bg); }
+.phone.wear-keys .dpad { background-image: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1), transparent 58%), var(--dpad-bg); }
+
+.wear-lcd { position: absolute; inset: 0; z-index: 6; pointer-events: none; }
+.wear-lcd .w-crack { position: absolute; left: 0; bottom: 0; width: calc(var(--u) * 8); height: calc(var(--u) * 8); opacity: 0.55; }
+.wear-lcd .w-crack svg { display: block; width: 100%; height: 100%; }
+.wear-lcd .w-crack path { fill: none; stroke: rgba(255, 255, 255, 0.75); stroke-width: 1px; vector-effect: non-scaling-stroke; }
+.wear-lcd .w-crack .thin { stroke: rgba(255, 255, 255, 0.35); }
+.wear-lcd .w-pixel {
+  position: absolute;
+  width: calc(var(--u) * 0.5);
+  height: calc(var(--u) * 0.5);
+  background: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 1px rgba(0, 0, 0, 0.6);
+}

@@ -6,6 +6,7 @@ import { getTotal, isUnlocked, unlockAtOf } from '../progress/Progress.js';
 import * as Sfx from '../audio/Sfx.js';
 import * as Music from '../audio/Music.js';
 import { perkFor } from '../skins/perks.js';
+import * as Wear from '../phone/Wear.js';
 
 /** Phones shown in the picker: secret phones stay hidden until unlocked. */
 export function visibleSkins() {
@@ -36,6 +37,10 @@ export default class SkinScene extends Phaser.Scene {
       softRight: () => this.cancel(),
       back: () => this.cancel(),
       digit: (d) => {
+        if (d === '*') {
+          this.onRepair();
+          return;
+        }
         if (d === '9') {
           Music.toggle();
           return;
@@ -56,6 +61,30 @@ export default class SkinScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       if (window.__vpg && window.__vpg.skins === this) delete window.__vpg.skins;
     });
+  }
+
+  /** * once asks, * again (within 3 s) repairs the viewed phone to Mint. */
+  onRepair() {
+    const skin = this.list[this.viewIndex];
+    if (!isUnlocked(skin)) return;
+    const cond = Wear.condition(skin.id);
+    if (cond.id === 'mint') {
+      this.repairArmed = 0;
+      this.showToast('Already mint!');
+      return;
+    }
+    const now = this.time.now;
+    if (this.repairArmed && now - this.repairArmed < 3000) {
+      this.repairArmed = 0;
+      Wear.repair(skin.id);
+      Sfx.play('codeOk');
+      this.draw();
+      this.showToast('Repaired: good as new!');
+      return;
+    }
+    this.repairArmed = now;
+    Sfx.menuMove();
+    this.showToast('Repair? Press * again');
   }
 
   onCycle(dir) {
@@ -187,11 +216,22 @@ export default class SkinScene extends Phaser.Scene {
     }
 
     this.drawPerk(pal, viewed, unlocked);
+    if (unlocked) this.drawCondition(pal, viewed);
 
     // Hints
     this.add.text(180, 382, '◀  change phone  ▶', mono('16px', pal.accent)).setOrigin(0.5);
     this.add.text(180, 410, unlocked ? 'OK select   ·   C back' : 'Locked   ·   C back', mono('14px', pal.dim)).setOrigin(0.5);
-    this.add.text(180, 436, `or press 1–${Math.min(8, this.list.length)}`, mono('13px', pal.dim)).setOrigin(0.5);
+    this.add.text(180, 436, unlocked ? `1–${Math.min(8, this.list.length)} jump · * repair` : `or press 1–${Math.min(8, this.list.length)}`, mono('13px', pal.dim)).setOrigin(0.5);
+  }
+
+  /** Wear & tear: Mint / Used / Battered / Battle-scarred + play time. */
+  drawCondition(pal, viewed) {
+    const c = Wear.condition(viewed.id);
+    this.conditionShown = c.id;
+    const color = c.id === 'mint' ? pal.fg : c.id === 'used' ? pal.accent : c.id === 'battered' ? pal.warn : pal.danger;
+    this.add.text(180, 272, `${c.name.toUpperCase()} · ${Wear.formatPlaytime(c.secs)} played${c.repairs ? ` · fixed x${c.repairs}` : ''}`, {
+      fontSize: '13px', color, fontFamily: 'monospace', fontStyle: 'bold'
+    }).setOrigin(0.5);
   }
 
   /** Perk card: every phone changes how the games play. */

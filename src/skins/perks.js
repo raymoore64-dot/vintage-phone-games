@@ -25,6 +25,8 @@ import { gameNow, isFrozen } from '../ui/PauseOverlay.js';
 import * as Lcd from '../phone/Lcd.js';
 import * as Phone from '../phone/Phone.js';
 import * as Sfx from '../audio/Sfx.js';
+import * as Eggs from '../phone/Eggs.js';
+import { attachCalls } from '../phone/Calls.js';
 
 const BASE = {
   speed: 1,
@@ -153,6 +155,15 @@ export function perkPoints(scene, base, opts = {}) {
   return whole;
 }
 
+/** x2 score for ms of game time (Glitch window; also used by call rewards). */
+export function grantDouble(scene, ms = 6000, label = 'x2') {
+  const r = rt(scene);
+  if (!r) return false;
+  r.glitchUntil = Math.max(r.glitchUntil || 0, gameNow(scene)) + ms;
+  popText(scene, label, 'warn');
+  return true;
+}
+
 /** Tough phones forgive one fatal hit per run. */
 export function useTough(scene) {
   const r = rt(scene);
@@ -164,7 +175,7 @@ export function useTough(scene) {
   return true;
 }
 
-function popText(scene, msg, colorKey = 'warn') {
+export function popText(scene, msg, colorKey = 'warn') {
   if (!scene || !scene.sys || !scene.sys.isActive()) return;
   const pal = getSkin().palette;
   const t = scene.add.text(180, 64, msg, {
@@ -174,7 +185,7 @@ function popText(scene, msg, colorKey = 'warn') {
   scene.tweens.add({ targets: t, y: 40, alpha: 0, delay: 500, duration: 700, onComplete: () => t.destroy() });
 }
 
-function addBonus(scene, base, label) {
+export function addBonus(scene, base, label) {
   const gain = perkPoints(scene, base, { quiet: true });
   scene.score = (Number(scene.score) || 0) + gain;
   if (scene.scoreText && scene.scoreText.active) scene.scoreText.setText(`Score: ${scene.score}`);
@@ -235,6 +246,14 @@ export function attachPerks(scene, gameId) {
   Lcd.setGhost(!!perk.ghost);
   Lcd.setSunlight(!!perk.sunlight);
   showBanner(scene, perk, fullCharge);
+
+  // Batch A: T9 code-book eggs armed for this run, and the fake-call roll
+  const eggs = Eggs.applyRun(scene);
+  if (eggs.length) {
+    const names = { disco: 'DISCO MODE!', flip: 'UPSIDE DOWN!', pixel: 'FAT PIXELS!' };
+    scene.time.delayedCall(2600, () => popText(scene, eggs.map((e) => names[e]).join(' '), 'warn'));
+  }
+  attachCalls(scene, gameId);
 
   const onUpdate = () => {
     if (isFrozen(scene) || scene.alive === false) return;

@@ -30,7 +30,12 @@ import {
 
 const PAUSED_OK = new Set([
   'pause', 'resume', 'countdownTick', 'muteOn', 'muteOff',
-  'smsAlert', 'batteryLow'
+  'smsAlert', 'batteryLow',
+  // batch A: power, boot, calls and the code book play over frozen games
+  'powerOff', 'pinKey', 'pinOk', 'eggFound', 'callAnswer', 'callEnd', 'callMissed',
+  'boot_linicro', 'boot_purplex', 'boot_glacio', 'boot_rubytel', 'boot_solara',
+  'boot_mintra', 'boot_aurum', 'boot_volta', 'boot_proto',
+  'ring_mum', 'ring_dex', 'ring_kaz', 'ring_unknown', 'ring_bank'
 ]);
 
 const THROTTLE = {
@@ -98,7 +103,33 @@ const PHRASES = {
   perkGlitch:      { notes: [{ f: 1200, d: 0.03 }, { f: 300, d: 0.03 }, { f: 1500, d: 0.03 }, { f: 200, d: 0.05 }], gain: 0.12, type: 'square' },
   codeOk:          { notes: [{ f: 523, d: 0.07 }, { f: 784, d: 0.07 }, { f: 1047, d: 0.07 }, { f: 1319, d: 0.18 }], gain: 0.14, type: 'pulse' },
   codeBad:         { notes: [{ f: 196, d: 0.12, gap: 0.04 }, { f: 165, d: 0.18 }], gain: 0.14, type: 'square' },
-  codeKey:         { notes: [{ f: 1040, d: 0.04 }], gain: 0.1, type: 'square' }
+  codeKey:         { notes: [{ f: 1040, d: 0.04 }], gain: 0.1, type: 'square' },
+
+  // ---- Batch A: power, boot jingles (one per invented brand), calls, eggs ----
+  powerOff:        { notes: [{ f: 784, d: 0.1 }, { f: 659, d: 0.1 }, { f: 523, d: 0.1 }, { f: 392, d: 0.12 }, { f: 262, d: 0.3 }], gain: 0.14, type: 'square' },
+  pinKey:          { notes: [{ f: 1100, d: 0.035 }], gain: 0.1, type: 'square' },
+  pinOk:           { notes: [{ f: 880, d: 0.06 }, { f: 1175, d: 0.1 }], gain: 0.12, type: 'square' },
+  eggFound:        { notes: [{ f: 659, d: 0.06 }, { f: 988, d: 0.06 }, { f: 784, d: 0.06 }, { f: 1175, d: 0.06 }, { f: 1319, d: 0.2 }], gain: 0.14, type: 'pulse' },
+  callAnswer:      { notes: [{ f: 523, d: 0.05 }, { f: 784, d: 0.09 }], gain: 0.12, type: 'square' },
+  callEnd:         { notes: [{ f: 494, d: 0.08, gap: 0.05 }, { f: 494, d: 0.08, gap: 0.05 }, { f: 494, d: 0.08 }], gain: 0.12, type: 'square' },
+  callMissed:      { notes: [{ f: 440, d: 0.12 }, { f: 349, d: 0.22 }], gain: 0.13, type: 'square' },
+
+  boot_linicro:    { notes: [{ f: 523, d: 0.09 }, { f: 659, d: 0.09 }, { f: 784, d: 0.16, gap: 0.08 }, { f: 784, d: 0.09 }, { f: 659, d: 0.09 }, { f: 1047, d: 0.3 }], gain: 0.14, type: 'square' },
+  boot_purplex:    { notes: [{ f: 1047, d: 0.12 }, { f: 880, d: 0.12 }, { f: 698, d: 0.12 }, { f: 880, d: 0.12 }, { f: 1175, d: 0.34 }], gain: 0.13, type: 'triangle' },
+  boot_glacio:     { notes: [{ f: 1319, d: 0.07 }, { f: 988, d: 0.07 }, { f: 1175, d: 0.07 }, { f: 880, d: 0.07 }, { f: 1319, d: 0.07 }, { f: 1397, d: 0.3 }], gain: 0.15, type: 'sine' },
+  boot_rubytel:    { notes: [{ f: 392, d: 0.07, gap: 0.04 }, { f: 392, d: 0.07 }, { f: 523, d: 0.08 }, { f: 659, d: 0.08 }, { f: 784, d: 0.26 }], gain: 0.14, type: 'square' },
+  boot_solara:     { notes: [{ f: 523, d: 0.08 }, { f: 587, d: 0.08 }, { f: 659, d: 0.08 }, { f: 784, d: 0.08 }, { f: 880, d: 0.08 }, { f: 1047, d: 0.32 }], gain: 0.13, type: 'pulse' },
+  boot_mintra:     { notes: [{ f: 659, d: 0.08 }, { f: 523, d: 0.08 }, { f: 659, d: 0.08 }, { f: 784, d: 0.08 }, { f: 659, d: 0.08 }, { f: 1047, d: 0.26 }], gain: 0.13, type: 'square' },
+  boot_aurum:      { notes: [{ f: 392, d: 0.16 }, { f: 523, d: 0.16 }, { f: 659, d: 0.16 }, { f: 523, d: 0.12 }, { f: 784, d: 0.42 }], gain: 0.13, type: 'triangle' },
+  boot_volta:      { notes: [{ f: 220, d: 0.05 }, { f: 440, d: 0.05 }, { f: 880, d: 0.05 }, { f: 330, d: 0.05 }, { f: 660, d: 0.05 }, { f: 1320, d: 0.05 }, { f: 990, d: 0.24 }], gain: 0.13, type: 'square' },
+  boot_proto:      { notes: [{ f: 1200, d: 0.04 }, { f: 300, d: 0.04 }, { f: 900, d: 0.06 }, { f: 450, d: 0.04 }, { f: 1300, d: 0.06 }, { f: 600, d: 0.04 }, { f: 1100, d: 0.28 }], gain: 0.12, type: 'pulse' },
+
+  // One ring cycle each; Calls.js repeats them while the phone rings
+  ring_mum:        { notes: [{ f: 880, d: 0.05, gap: 0.01 }, { f: 1047, d: 0.05, gap: 0.01 }, { f: 880, d: 0.05, gap: 0.01 }, { f: 1047, d: 0.05, gap: 0.01 }, { f: 880, d: 0.05, gap: 0.01 }, { f: 1047, d: 0.05, gap: 0.01 }, { f: 880, d: 0.05, gap: 0.01 }, { f: 1047, d: 0.05 }], gain: 0.12, type: 'square' },
+  ring_dex:        { notes: [{ f: 659, d: 0.09 }, { f: 659, d: 0.09 }, { f: 784, d: 0.09 }, { f: 659, d: 0.09 }, { f: 587, d: 0.09 }, { f: 523, d: 0.18 }], gain: 0.13, type: 'square' },
+  ring_kaz:        { notes: [{ f: 1175, d: 0.08 }, { f: 988, d: 0.08 }, { f: 784, d: 0.08 }, { f: 988, d: 0.08 }, { f: 1175, d: 0.08 }, { f: 1319, d: 0.2 }], gain: 0.12, type: 'pulse' },
+  ring_unknown:    { notes: [{ f: 466, d: 0.18 }, { f: 440, d: 0.18 }, { f: 466, d: 0.18 }, { f: 349, d: 0.36 }], gain: 0.13, type: 'triangle' },
+  ring_bank:       { notes: [{ f: 700, d: 0.04, gap: 0.005 }, { f: 600, d: 0.04, gap: 0.005 }, { f: 700, d: 0.04, gap: 0.005 }, { f: 600, d: 0.04, gap: 0.005 }, { f: 700, d: 0.04, gap: 0.005 }, { f: 600, d: 0.04, gap: 0.2 }, { f: 700, d: 0.04, gap: 0.005 }, { f: 600, d: 0.04, gap: 0.005 }, { f: 700, d: 0.04, gap: 0.005 }, { f: 600, d: 0.04 }], gain: 0.12, type: 'square' }
 };
 
 const NOISE = {

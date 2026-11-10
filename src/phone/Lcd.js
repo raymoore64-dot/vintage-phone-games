@@ -9,6 +9,12 @@
  *   setSunlight(on)  — SOLARA "Sunlight": a gentle contrast / saturation lift.
  *   setDim(on)       — battery empty: the backlight dims.
  *   glitch()         — VOLTA "Glitch": a 450 ms jitter + colour shift.
+ *
+ * T9 code-book eggs (one run each, see Eggs.js):
+ *   setDisco(on)     — DISCO: the LCD cycles through colours.
+ *   setFlip(on)      — FLIP: the picture is upside down (controls are not).
+ *   setFat(on)       — PIXEL: a 120x160 copy of each frame is drawn on top,
+ *                      scaled up with nearest-neighbour: 3x3 fat pixels.
  */
 
 let game = null;
@@ -17,6 +23,11 @@ let ghostCtx = null;
 let ghostOn = false;
 let ghostFrames = 0;
 
+let fatCanvas = null;
+let fatCtx = null;
+let fatOn = false;
+let fatFrames = 0;
+
 const GHOST_KEEP = 0.62;   // how much of the old frame survives each draw
 
 function screenEl() {
@@ -24,6 +35,15 @@ function screenEl() {
 }
 
 function onPostRender() {
+  if (fatOn && fatCtx && game && game.canvas) {
+    try {
+      fatCtx.imageSmoothingEnabled = true;
+      fatCtx.drawImage(game.canvas, 0, 0, fatCanvas.width, fatCanvas.height);
+      fatFrames += 1;
+    } catch {
+      // skip
+    }
+  }
   if (!ghostOn || !ghostCtx || !game || !game.canvas) return;
   ghostFrames += 1;
   try {
@@ -48,6 +68,15 @@ export function initLcd(g) {
     ghostCanvas.setAttribute('aria-hidden', 'true');
     container.appendChild(ghostCanvas);
     ghostCtx = ghostCanvas.getContext('2d');
+  }
+  if (container && !fatCanvas) {
+    fatCanvas = document.createElement('canvas');
+    fatCanvas.className = 'lcd-fat';
+    fatCanvas.width = 120;
+    fatCanvas.height = 160;
+    fatCanvas.setAttribute('aria-hidden', 'true');
+    container.appendChild(fatCanvas);
+    fatCtx = fatCanvas.getContext('2d');
   }
   if (game && game.events) game.events.on('postrender', onPostRender);
   window.__vpg = window.__vpg || {};
@@ -84,9 +113,30 @@ export function glitch() {
   el._glitchTimer = setTimeout(() => el.classList.remove('lcd-glitch'), 460);
 }
 
+export function setDisco(on) {
+  const el = screenEl();
+  if (el) el.classList.toggle('egg-disco', !!on);
+}
+
+export function setFlip(on) {
+  const el = screenEl();
+  if (el) el.classList.toggle('egg-flip', !!on);
+}
+
+export function setFat(on) {
+  fatOn = !!on;
+  fatFrames = 0;
+  if (fatCtx) fatCtx.clearRect(0, 0, fatCanvas.width, fatCanvas.height);
+  if (fatCanvas) fatCanvas.classList.toggle('on', fatOn);
+}
+
 export function state() {
   const el = screenEl();
   return {
+    disco: !!(el && el.classList.contains('egg-disco')),
+    flip: !!(el && el.classList.contains('egg-flip')),
+    fat: fatOn,
+    fatFrames,
     ghost: ghostOn,
     ghostFrames,
     ghostVisible: !!(ghostCanvas && ghostCanvas.classList.contains('on')),
@@ -96,4 +146,4 @@ export function state() {
   };
 }
 
-export default { initLcd, setGhost, setSunlight, setDim, glitch, state };
+export default { initLcd, setGhost, setSunlight, setDim, glitch, setDisco, setFlip, setFat, state };

@@ -18,6 +18,13 @@ import Phaser from 'phaser';
  * When a scene has a pause controller attached (attachPause), bound handlers
  * are gated: while the game is frozen, movement and digits are swallowed,
  * OK / left soft / P / # resume, and C / Esc / right soft return to the menu.
+ *
+ * Power key: holding the red C key (or keyboard Esc / End) for HOLD_MS
+ * emits 'powerHold' once per hold. A normal tap still emits 'back'.
+ *
+ * Input capture: setInputCapture(fn) routes every press to fn(action,
+ * digit) instead of the scenes (used by the power-off screen, the boot
+ * PIN screen and incoming calls). 'powerHold' is never captured.
  */
 
 const bus = new Phaser.Events.EventEmitter();
@@ -32,7 +39,7 @@ const KEYBOARD = {
   Enter: 'ok', ' ': 'ok',
   q: 'softLeft', Q: 'softLeft',
   e: 'softRight', E: 'softRight',
-  Escape: 'back', Backspace: 'back',
+  Escape: 'back', Backspace: 'back', End: 'back',
   p: 'pause', P: 'pause'
 };
 
@@ -42,6 +49,50 @@ const NO_REPEAT = new Set(['ok', 'softLeft', 'softRight', 'back', 'pause']);
 const digitId = (d) => (d === '*' ? 'star' : d === '#' ? 'hash' : `d${d}`);
 
 let initialized = false;
+let capture = null;
+
+// ---- Red key hold = power ---------------------------------------------------
+export const HOLD_MS = 1200;
+const powerHolds = new Set();   // sources currently holding the red key
+let powerTimer = 0;
+let powerFired = false;
+
+function powerDown(src) {
+  powerHolds.add(src);
+  if (powerTimer || powerFired) return;
+  powerTimer = setTimeout(() => {
+    powerTimer = 0;
+    if (!powerHolds.size) return;
+    powerFired = true;
+    bus.emit('powerHold');
+  }, HOLD_MS);
+}
+
+function powerUp(src) {
+  powerHolds.delete(src);
+  if (powerHolds.size) return;
+  clearTimeout(powerTimer);
+  powerTimer = 0;
+  powerFired = false;
+}
+
+function powerReset() {
+  powerHolds.clear();
+  clearTimeout(powerTimer);
+  powerTimer = 0;
+  powerFired = false;
+}
+
+/** Route all presses to fn(action, digit) (null to release). Returns a release fn. */
+export function setInputCapture(fn) {
+  capture = typeof fn === 'function' ? fn : null;
+  const mine = capture;
+  return () => { if (capture === mine) capture = null; };
+}
+
+export function hasInputCapture() {
+  return !!capture;
+}
 let softCache = { left: null, right: null };
 
 // Keyboard ref-counts (ArrowUp and W can both mean "up") plus pointer holds.
@@ -85,6 +136,11 @@ function flash(id) {
 }
 
 export function press(action, digit) {
+  if (capture) {
+    flash(action === 'digit' ? digitId(digit) : action);
+    try { capture(action, digit); } catch (err) { console.warn('input capture failed', err); }
+    return;
+  }
   if (action === 'digit') {
     // '#' is the pause key on the keypad; it is not forwarded as a digit.
     if (digit === '#') {
@@ -114,6 +170,7 @@ export function initPhoneInput() {
 
   window.__vpg = window.__vpg || {};
   window.__vpg.getInputBus = getInputBus;
+  window.__vpg.press = press;
 
   document.querySelectorAll('[data-key]').forEach((el) => {
     el.addEventListener('pointerdown', (e) => {
@@ -127,12 +184,17 @@ export function initPhoneInput() {
       } else {
         pointerHolds.set(e.pointerId, { action: el.dataset.key });
         rebuildHeld();
+        if (el.dataset.key === 'back') powerDown(`p${e.pointerId}`);
         press(el.dataset.key);
       }
     });
-    el.addEventListener('pointerup', (e) => releasePointer(e.pointerId));
-    el.addEventListener('pointercancel', (e) => releasePointer(e.pointerId));
-    el.addEventListener('lostpointercapture', (e) => releasePointer(e.pointerId));
+    const up = (e) => {
+      if (el.dataset.key === 'back') powerUp(`p${e.pointerId}`);
+      releasePointer(e.pointerId);
+    };
+    el.addEventListener('pointerup', up);
+    el.addEventListener('pointercancel', up);
+    el.addEventListener('lostpointercapture', up);
     el.addEventListener('contextmenu', (e) => e.preventDefault());
   });
 
@@ -149,6 +211,7 @@ export function initPhoneInput() {
       if (!e.repeat) {
         keyCounts.set(action, (keyCounts.get(action) || 0) + 1);
         rebuildHeld();
+        if (e.key === 'Escape' || e.key === 'End') powerDown(`k${e.key}`);
       }
       if (!(e.repeat && NO_REPEAT.has(action))) press(action);
     } else {
@@ -163,6 +226,7 @@ export function initPhoneInput() {
       rebuildHeld();
     } else if (KEYBOARD[e.key]) {
       const action = KEYBOARD[e.key];
+      if (e.key === 'Escape' || e.key === 'End') powerUp(`k${e.key}`);
       const n = (keyCounts.get(action) || 1) - 1;
       if (n <= 0) keyCounts.delete(action);
       else keyCounts.set(action, n);
@@ -175,6 +239,7 @@ export function initPhoneInput() {
     keyHeldDigits.clear();
     pointerHolds.clear();
     rebuildHeld();
+    powerReset();
   });
 }
 

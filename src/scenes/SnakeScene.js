@@ -8,6 +8,11 @@ import * as Sfx from '../audio/Sfx.js';
 import * as Music from '../audio/Music.js';
 import { attachPerks, perkSpeed, perkPoints, useTough } from '../skins/perks.js';
 import { onRunStart } from '../phone/Sms.js';
+import { isGold } from '../phone/Eggs.js';
+
+// T9 egg "SNAKE" (76253): a solid-gold snake. The one place a game colour
+// deliberately ignores the phone palette.
+const GOLD = { head: 0xffe066, a: 0xe8b923, b: 0xc9971a, glint: 0xfff6c8 };
 
 // ---- Tuning -------------------------------------------------------------
 const GRID = 20;            // cell size in px
@@ -50,6 +55,7 @@ export default class SnakeScene extends Phaser.Scene {
       css: pal
     };
 
+    this.gold = isGold();
     this.snake = [{ x: 9, y: 12 }, { x: 8, y: 12 }, { x: 7, y: 12 }];
     this.direction = { x: 1, y: 0 };
     this.dirQueue = [];
@@ -348,8 +354,15 @@ export default class SnakeScene extends Phaser.Scene {
 
     // Snake
     this.snake.forEach((s, i) => {
-      g.fillStyle(i === 0 ? pal.fg : pal.body, 1);
-      g.fillRect(s.x * GRID + 1, s.y * GRID + 1, GRID - 2, GRID - 2);
+      if (this.gold) {
+        g.fillStyle(i === 0 ? GOLD.head : (i % 2 ? GOLD.b : GOLD.a), 1);
+        g.fillRect(s.x * GRID + 1, s.y * GRID + 1, GRID - 2, GRID - 2);
+        g.fillStyle(GOLD.glint, 0.85);
+        g.fillRect(s.x * GRID + 3, s.y * GRID + 3, 6, 3);
+      } else {
+        g.fillStyle(i === 0 ? pal.fg : pal.body, 1);
+        g.fillRect(s.x * GRID + 1, s.y * GRID + 1, GRID - 2, GRID - 2);
+      }
     });
 
     // Food (gentle pulse)

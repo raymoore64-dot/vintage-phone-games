@@ -10,6 +10,7 @@ export const CAST = {
   mum: { name: 'Mum', number: '07700 900222' },
   kaz: { name: 'Kaz', number: '07700 900345' },
   unknown: { name: 'Unknown', number: 'Withheld' },
+  bank: { name: 'The Bank', number: '0808 157 0192' },
   network: { name: 'LINICRO Net', number: '121' }
 };
 
@@ -98,4 +99,67 @@ export const CODE_MESSAGES = {
 
 export const DARE_EXPIRED = { from: 'dex', text: 'u never did my dare yday. CHICKEN. new 1 coming...' };
 
-export default { CAST, GAME_INFO, WELCOME, DARES, MILESTONES, BESTS, UNLOCKS, NIGHT, CODE_MESSAGES, DARE_EXPIRED };
+// ---- Fake calls (Calls.js) ---------------------------------------------------
+// Each caller: ringtone id, answered-call transcripts (2-4 lines, with a
+// reward), the guilt-trip text sent after a decline, and a missed-call text.
+// reward: { points: n } adds to this run's score, { double: ms } = x2 score.
+export const CALLS = {
+  mum: {
+    ring: 'ring_mum',
+    answers: [
+      { lines: ['MUM: Hello? Hello? Is this thing on?', 'MUM: I\'m on the house phone, it\'s cheaper.', 'MUM: Your tea\'s in the microwave. 2 mins. Bye love!'], reward: { points: 40 }, label: 'MUM\'S TEA' },
+      { lines: ['MUM: Did you get my text? I put a kiss on it.', 'YOU: Yes Mum.', 'MUM: Dad wants to know how to do the snake one. Bye x'], reward: { points: 30 }, label: 'MUM' },
+      { lines: ['MUM: I\'ve put £10 credit on your phone.', 'MUM: Don\'t spend it all on ringtones.', 'MUM: Especially that frog one. Bye!'], reward: { points: 50 }, label: 'TOP-UP' }
+    ],
+    guilt: 'You declined my call. I can SEE that you know. Not cross, just disappointed. Mum x',
+    missed: 'Rang u 3 times. Are u alive? Ring me back. Not from the house phone, Dad is on the internet. Mum x'
+  },
+  dex: {
+    ring: 'ring_dex',
+    answers: [
+      { lines: ['DEX: alriiiiight!!', 'YOU: alriiiiight!', 'DEX: ...ok thats all i rang 4. laters'], reward: { points: 25 }, label: 'DEX' },
+      { lines: ['DEX: m8 can u hear me? im in a tunnel', 'DEX: ...kkkshhhh...', 'DEX: ...ill txt u. its 10p a txt'], reward: { points: 20 }, label: 'TUNNEL' },
+      { lines: ['DEX: did u tape the footy last nite?', 'YOU: on VHS yeah', 'DEX: LEGEND. dont tape ur mums soaps over it'], reward: { points: 35 }, label: 'VHS' }
+    ],
+    guilt: 'u blanked me?? m8. MATE. fine. im telling every1 ur rubbish at snake',
+    missed: 'pick up ur phone!!! wot is the point of a mobile if u never answer it'
+  },
+  kaz: {
+    ring: 'ring_kaz',
+    answers: [
+      { lines: ['KAZ: r u going 2 the school disco friday?', 'KAZ: wear the butterfly clips. trust me', 'KAZ: my credits running ou-'], reward: { double: 6000 }, label: 'HYPED x2' },
+      { lines: ['KAZ: guess who fancies u!!', 'YOU: who??', 'KAZ: not telling ;-) byeee'], reward: { points: 30 }, label: 'GOSSIP' }
+    ],
+    guilt: 'rude!! i was gonna tell u a secret. not now :-(',
+    missed: 'missed u! ring me back b4 9 its free after 9 x'
+  },
+  unknown: {
+    ring: 'ring_unknown',
+    answers: [
+      { lines: ['???: ...', '???: the prototype is watching u play.', '???: *dial-up noises*'], reward: { double: 6000 }, label: 'SIGNAL x2' },
+      { lines: ['???: is ur fridge running?', 'YOU: ...yes?', '???: better go catch it then! *click*'], reward: { points: 20 }, label: 'PRANKED' }
+    ],
+    guilt: 'you cant ignore me 4ever.',
+    missed: 'withheld number tried to call u. twice. sleep tight.'
+  },
+  bank: {
+    ring: 'ring_bank',
+    answers: [
+      { lines: ['BANK: Good evening, this is The Bank.', 'BANK: You have been selected for a Gold Card.', 'BANK: Only joking. Here are some points of interest.'], reward: { points: 60 }, label: 'INTEREST' },
+      { lines: ['BANK: Your account is overdrawn by... 3p.', 'BANK: We have waived it. Do not tell anyone.', 'BANK: Have a nice day.'], reward: { points: 40 }, label: 'REFUND' }
+    ],
+    guilt: 'The Bank: We tried to call you about your account. Please do not ignore us. Have a nice day.',
+    missed: 'The Bank: Sorry we missed you. Your call is important to us. Please hold.'
+  }
+};
+
+// Weighted caller pool (Mum rings the most, of course)
+export const CALLER_POOL = ['mum', 'mum', 'dex', 'dex', 'kaz', 'unknown', 'bank'];
+
+// T9 easter eggs (Eggs.js)
+export const EGG_TEXTS = {
+  lol: 'LOL',
+  lolFollow: 'u typed LOL into a phone menu. who r u laughing at?'
+};
+
+export default { CAST, GAME_INFO, WELCOME, DARES, MILESTONES, BESTS, UNLOCKS, NIGHT, CODE_MESSAGES, DARE_EXPIRED, CALLS, CALLER_POOL, EGG_TEXTS };

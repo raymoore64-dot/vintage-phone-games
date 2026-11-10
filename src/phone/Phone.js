@@ -50,6 +50,7 @@ let lastSave = 0;
 let lastRender = { batt: -1, sig: -1, clock: '', unread: -1, plug: null, charging: null };
 let unreadSource = () => 0;
 const tickHooks = [];
+const receiveGates = [];
 let toastTimer = 0;
 const toastQueue = [];
 let toastBusy = false;
@@ -117,7 +118,13 @@ export function isNight() {
 
 /** Texts arrive only off-gameplay and with at least 2 bars. */
 export function canReceive() {
-  return activity !== 'play' && signal >= 2;
+  if (activity === 'play' || signal < 2) return false;
+  return receiveGates.every((fn) => { try { return fn() !== false; } catch { return true; } });
+}
+
+/** Extra conditions for texts arriving (power on, no call ringing...). */
+export function addReceiveGate(fn) {
+  if (typeof fn === 'function') receiveGates.push(fn);
 }
 
 export function setUnreadSource(fn) {
@@ -334,7 +341,19 @@ export function initPhone(g) {
   };
 }
 
+/** Spend some battery (answering a call). Never below 1%; mains = free. */
+export function drain(pct) {
+  if (Secrets.has('mains') || rescue) return state.battery;
+  state.battery = Math.max(1, state.battery - Math.max(0, Number(pct) || 0));
+  render(true);
+  return state.battery;
+}
+
+export function isRescuing() {
+  return !!rescue;
+}
+
 export default {
-  initPhone, batteryLevel, batteryBars, signalBars, getActivity, hour, isNight,
+  initPhone, batteryLevel, isRescuing, drain, addReceiveGate, batteryBars, signalBars, getActivity, hour, isNight,
   canReceive, setUnreadSource, onTick, render, toast, buzz, GAME_SCENES
 };

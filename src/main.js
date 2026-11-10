@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import './styles/phone-extras.css';
 import { initPhoneInput } from './input/PhoneInput.js';
 import { initSfx } from './audio/Sfx.js';
 import { initMusic } from './audio/Music.js';
@@ -13,6 +14,13 @@ import BlocksScene from './scenes/BlocksScene.js';
 import SimonScene from './scenes/SimonScene.js';
 import SkinScene from './scenes/SkinScene.js';
 import InboxScene from './scenes/InboxScene.js';
+import SettingsScene from './scenes/SettingsScene.js';
+import CodeBookScene from './scenes/CodeBookScene.js';
+import CreditsScene from './scenes/CreditsScene.js';
+import { initPower } from './phone/Power.js';
+import { initCalls } from './phone/Calls.js';
+import { initWear } from './phone/Wear.js';
+import { publishEggs } from './phone/Eggs.js';
 import { initPhone } from './phone/Phone.js';
 import { initLcd } from './phone/Lcd.js';
 import { initSms } from './phone/Sms.js';
@@ -45,7 +53,8 @@ const config = {
     BootScene, MenuScene,
     SnakeScene, BounceScene, ImpactScene,
     BricksScene, BlocksScene, SimonScene,
-    SkinScene, InboxScene
+    SkinScene, InboxScene,
+    SettingsScene, CodeBookScene, CreditsScene
   ],
   physics: {
     default: 'arcade',
@@ -63,6 +72,11 @@ window.__vpgGame = game;
 // Battery / signal / clock status bar + LCD effects ride on the game loop
 initPhone(game);
 initLcd(game);
+// Batch A: power key + boot, fake calls, wear & tear, T9 code book
+initPower(game);
+initCalls();
+initWear();
+publishEggs();
 window.__vpg = window.__vpg || {};
 window.__vpg.setSkin = (id) => setSkin(id).id;
 export default game;

@@ -226,6 +226,16 @@ export function onMenu() {
   emit();
 }
 
+/**
+ * Queue a text from someone in the cast (calls, eggs). It arrives like any
+ * other text: only off-gameplay, with 2+ bars.
+ */
+export function queueText(fromKey, text, extra = {}) {
+  const m = queue(make(fromKey, text, extra));
+  emit();
+  return m;
+}
+
 // ---- Delivery -------------------------------------------------------------
 
 function deliver(msg) {
@@ -340,6 +350,6 @@ export function initSms() {
 }
 
 export default {
-  initSms, onChange, onMenu, onRunStart, list, get, unreadCount, pendingCount,
+  initSms, onChange, onMenu, onRunStart, queueText, list, get, unreadCount, pendingCount,
   markRead, getDare, dareStatus, formatTime, today
 };

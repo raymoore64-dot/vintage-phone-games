@@ -8,15 +8,24 @@ import * as Music from '../audio/Music.js';
 import * as Sms from '../phone/Sms.js';
 import * as Secrets from '../phone/Secrets.js';
 import * as Phone from '../phone/Phone.js';
+import * as Eggs from '../phone/Eggs.js';
+import * as Calls from '../phone/Calls.js';
 
 /*
  * Menu keys
  *   ▲▼ / 2 8   choose          OK / 5 / left soft   open
  *   1-6        play a game     7                    Messages
+ *   8          Settings (sound, music, calls, code book, power off)
  *   *          enter a secret code (then 4 digits; C cancels)
+ *   * *        T9 WORD mode: spell a word, one key press per letter
+ *              (e.g. LOL = 5 6 5). Fires on a match; OK checks;
+ *              C deletes a digit, C on an empty word closes.
  *   0          sound on/off    9                    music on/off
  *   right soft phone picker    (M / N also toggle sound / music anywhere)
+ *   hold C     power off / on (keyboard: hold Esc or End)
  */
+
+const T9_KEYS = { 2: 'abc', 3: 'def', 4: 'ghi', 5: 'jkl', 6: 'mno', 7: 'pqrs', 8: 'tuv', 9: 'wxyz', 0: '␣', 1: '.,' };
 
 const ITEMS = [
   { name: 'Snake: Trail', scene: 'SnakeScene', bestKey: 'vpg.snake.best', game: 'snake' },
@@ -25,9 +34,10 @@ const ITEMS = [
   { name: 'Bricks: Chain', scene: 'BricksScene', bestKey: 'vpg.bricks.best', game: 'bricks' },
   { name: 'Blocks: Quake', scene: 'BlocksScene', bestKey: 'vpg.blocks.best', game: 'blocks' },
   { name: 'Simon: Reverse', scene: 'SimonScene', bestKey: 'vpg.simon.best', game: 'simon' },
-  { name: 'Messages', scene: 'InboxScene', inbox: true }
+  { name: 'Messages', scene: 'InboxScene', inbox: true },
+  { name: 'Settings', scene: 'SettingsScene', settings: true }
 ];
-const INBOX_INDEX = ITEMS.length - 1;
+const INBOX_INDEX = 6;
 
 const LIST_TOP = 60;
 const ROW_H = 60;
@@ -83,7 +93,7 @@ export default class MenuScene extends Phaser.Scene {
       fontSize: '12px', color: pal.dim, fontFamily: 'monospace', fontStyle: 'bold'
     }).setOrigin(0.5);
     this.soundText = this.add.text(180, 424, '', mono('13px', pal.accent)).setOrigin(0.5);
-    this.add.text(180, 444, '1-6 play · 7 msgs · * code', mono('13px', pal.dim)).setOrigin(0.5);
+    this.add.text(180, 444, '7 msgs · 8 setup · * code · ** word', mono('13px', pal.dim)).setOrigin(0.5);
     this.add.text(180, 463, '0 sound · 9 music · ▶ Phone', mono('13px', pal.dim)).setOrigin(0.5);
 
     this.toast = this.add.text(180, 330, '', {
@@ -103,7 +113,7 @@ export default class MenuScene extends Phaser.Scene {
         Sfx.menuSelect();
         this.scene.start('SkinScene');
       },
-      back: () => { if (this.code) this.closeCode(); },
+      back: () => { if (this.code) this.codeBack(); },
       digit: (d) => this.onDigit(d)
     });
 
@@ -147,7 +157,7 @@ export default class MenuScene extends Phaser.Scene {
     this.code = { digits: '', done: false };
     this.codeNodes.forEach((n) => n.setVisible(true));
     this.codeTitle.setText('ENTER CODE').setColor(getSkin().palette.warn);
-    this.codeHint.setText('digits · C cancel');
+    this.codeHint.setText('4 digits · * again = WORD\nC cancel');
     this.renderCode();
     setSoftKeys('', 'Cancel');
     Sfx.play('codeKey');
@@ -167,8 +177,92 @@ export default class MenuScene extends Phaser.Scene {
     this.perkLine.setText(`${getSkin().brand} perk: ${currentPerk().name}`);
   }
 
+  // ---- T9 word mode (* then *) ----------------------------------------------
+
+  openWord() {
+    const pal = getSkin().palette;
+    this.code.word = true;
+    this.code.digits = '';
+    this.codeTitle.setText('T9 WORD').setColor(pal.warn);
+    Sfx.play('codeKey');
+    this.renderWord();
+  }
+
+  renderWord(msg) {
+    if (!this.code) return;
+    const d = this.code.digits;
+    this.codeText.setText(d ? d.split('').join(' ') : '_');
+    if (msg) this.codeHint.setText(msg);
+    else if (!d) this.codeHint.setText('spell a word, 1 press per letter\nOK check · C delete');
+    else this.codeHint.setText(d.split('').map((k) => T9_KEYS[k] || '?').join(' '));
+  }
+
+  wordDigit(d) {
+    if (!/^[0-9]$/.test(d)) return;
+    if (this.code.digits.length >= Eggs.MAX_DIGITS + 2) return;
+    this.code.digits += d;
+    Sfx.play('codeKey');
+    const egg = Eggs.match(this.code.digits);
+    if (egg) {
+      this.fireEgg(egg);
+      return;
+    }
+    this.renderWord();
+  }
+
+  wordCheck() {
+    if (!this.code || this.code.done || !this.code.word) return;
+    const egg = Eggs.match(this.code.digits);
+    if (egg) { this.fireEgg(egg); return; }
+    if (!this.code.digits) return;
+    Sfx.play('codeBad');
+    this.cameras.main.shake(140, 0.008);
+    this.code.digits = '';
+    this.renderWord('No such word. Try again!');
+  }
+
+  fireEgg(egg) {
+    const pal = getSkin().palette;
+    this.code.done = true;
+    const res = Eggs.trigger(egg.id);
+    this.lastEggResult = res;
+    this.codeText.setText(egg.word);
+    this.codeTitle.setText(res.fresh ? 'NEW CODE FOUND!' : 'CODE BOOK').setColor(pal.fg);
+    this.codeHint.setText(`${res.message}\nCode book ${res.found}/${res.total}`);
+    Sfx.play('eggFound');
+    if (res.fresh) Phone.toast(`★ Code book ${res.found}/${res.total}: ${egg.name}`);
+    this.time.delayedCall(res.scene ? 1100 : 1800, () => {
+      if (!this.code || !this.code.done) return;
+      if (res.scene) {
+        this.code = null;
+        this.scene.start(res.scene);
+        return;
+      }
+      this.closeCode();
+    });
+  }
+
+  codeBack() {
+    if (!this.code) return;
+    if (this.code.word && !this.code.done && this.code.digits) {
+      this.code.digits = this.code.digits.slice(0, -1);
+      Sfx.play('codeKey');
+      this.renderWord();
+      return;
+    }
+    this.closeCode();
+  }
+
   codeDigit(d) {
     if (!this.code || this.code.done) return;
+    if (d === '*' && !this.code.word && this.code.digits === '') {
+      this.openWord();
+      return;
+    }
+    if (this.code.word) {
+      this.wordDigit(d);
+      return;
+    }
     if (!/^[0-9]$/.test(d)) return;
     this.code.digits += d;
     Sfx.play('codeKey');
@@ -182,6 +276,7 @@ export default class MenuScene extends Phaser.Scene {
     this.codeHint.setText(res.message);
     if (res.ok) {
       Sfx.play('codeOk');
+      Eggs.markFound(`star:${this.code.digits}`);
       Phone.render(true);
     } else {
       Sfx.play('codeBad');
@@ -235,7 +330,10 @@ export default class MenuScene extends Phaser.Scene {
 
   onLaunch() {
     if (this.fromDigit) { this.fromDigit = false; return; }
-    if (this.code) return;
+    if (this.code) {
+      if (this.code.word) this.wordCheck();
+      return;
+    }
     this.launch();
   }
 
@@ -255,6 +353,7 @@ export default class MenuScene extends Phaser.Scene {
       const item = ITEMS[j];
       let badge = '';
       if (item.inbox) badge = unread > 0 ? `${unread} new` : '';
+      else if (item.settings) badge = `★${Eggs.foundCount()}/${Eggs.totalCount()}`;
       else if (dare && dare.today && !dare.done && dare.game === item.game) badge = 'DARE';
       row.badge.setText(badge);
     });
@@ -308,6 +407,10 @@ export default class MenuScene extends Phaser.Scene {
       const n = Sms.list().length;
       const u = Sms.unreadCount();
       this.info.setText(n ? `${u} unread · ${n} total` : 'No messages yet');
+      return;
+    }
+    if (item.settings) {
+      this.info.setText(`${Calls.callsLabel()} · Codes ${Eggs.foundCount()}/${Eggs.totalCount()}`);
       return;
     }
     const best = Number(localStorage.getItem(item.bestKey) || 0);
