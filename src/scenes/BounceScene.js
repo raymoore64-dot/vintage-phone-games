@@ -5,6 +5,7 @@ import { hexToInt, shadeHex } from '../skins/skins.js';
 import { getSkin } from '../skins/SkinManager.js';
 import { addScore, formatUnlockLine } from '../progress/Progress.js';
 import * as Sfx from '../audio/Sfx.js';
+import * as Music from '../audio/Music.js';
 
 // ---- Tuning -------------------------------------------------------------
 const W = 360;
@@ -105,6 +106,7 @@ export default class BounceScene extends Phaser.Scene {
     setSoftKeys('Flip', 'Menu');
 
     this.pauseCtl = attachPause(this);
+    Music.enter('bounce');
     this.draw();
   }
 
@@ -641,6 +643,7 @@ export default class BounceScene extends Phaser.Scene {
 
     const unlockMsg = formatUnlockLine(addScore('bounce', this.score));
     Sfx.bounceDeath();
+    Music.stop();
     Sfx.playEnd({ newBest, unlocked: !!unlockMsg });
 
     this.add.rectangle(180, 270, 300, unlockMsg ? 240 : 220, 0x000000, 0.8).setStrokeStyle(2, pal.fg);

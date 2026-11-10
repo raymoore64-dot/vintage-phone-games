@@ -5,6 +5,7 @@ import { hexToInt, shadeHex } from '../skins/skins.js';
 import { getSkin } from '../skins/SkinManager.js';
 import { addScore, formatUnlockLine } from '../progress/Progress.js';
 import * as Sfx from '../audio/Sfx.js';
+import * as Music from '../audio/Music.js';
 
 const W = 360;
 const H = 480;
@@ -135,6 +136,8 @@ export default class SimonScene extends Phaser.Scene {
 
     this.createLabels();
     this.pauseCtl = attachPause(this);
+    Music.enter('simon');
+    Music.setDuck(0.06);
     this.draw();
     this.time.delayedCall(500, () => this.nextRound());
   }
@@ -235,6 +238,7 @@ export default class SimonScene extends Phaser.Scene {
   }
 
   playSequence() {
+    Music.setDuck(0.06, 0.08);
     const token = this.seqToken;
     const seq = this.sequence;
     const on = this.flashMs();
@@ -250,6 +254,7 @@ export default class SimonScene extends Phaser.Scene {
     this.time.delayedCall(t + 80, () => {
       if (!this.alive || this.seqToken !== token) return;
       this.phase = 'input';
+      Music.setDuck(1, 0.1);
       this.status = this.reverse ? 'YOUR TURN  «' : 'YOUR TURN';
       this.substatus = this.reverse
         ? 'Backwards!  last note first'
@@ -379,6 +384,7 @@ export default class SimonScene extends Phaser.Scene {
     this.inputIndex = 0;
     this.phase = 'input';
     this.alive = true;
+    Music.setDuck(1, 0.05);
     this.status = this.reverse ? 'YOUR TURN  «' : 'YOUR TURN';
     this.substatus = this.reverse ? 'Backwards!  last note first' : 'Play it back';
     this.drawHud();
@@ -422,6 +428,7 @@ export default class SimonScene extends Phaser.Scene {
       this.bestText.setText(`Best: ${this.best}`);
     }
     const unlockMsg = formatUnlockLine(addScore('simon', this.score));
+    Music.stop();
     Sfx.playEnd({ newBest, unlocked: !!unlockMsg });
 
     this.add.rectangle(180, 270, 300, unlockMsg ? 240 : 220, 0x000000, 0.8).setStrokeStyle(2, pal.fg);

@@ -4,6 +4,7 @@ import SKINS, { hexToInt, skinIndex } from '../skins/skins.js';
 import { getSkin, previewSkin, setSkin } from '../skins/SkinManager.js';
 import { getTotal, isUnlocked, unlockAtOf } from '../progress/Progress.js';
 import * as Sfx from '../audio/Sfx.js';
+import * as Music from '../audio/Music.js';
 
 export default class SkinScene extends Phaser.Scene {
   constructor() {
@@ -16,6 +17,7 @@ export default class SkinScene extends Phaser.Scene {
     this.viewIndex = skinIndex(this.savedId);
     this.fromDigit = false;
     this.toast = null;
+    Music.enter('menu');
     this.draw();
 
     setSoftKeys('Select', 'Back');
@@ -27,6 +29,14 @@ export default class SkinScene extends Phaser.Scene {
       softRight: () => this.cancel(),
       back: () => this.cancel(),
       digit: (d) => {
+        if (d === '9') {
+          Music.toggle();
+          return;
+        }
+        if (d === '0') {
+          Sfx.toggleMuteWithClick();
+          return;
+        }
         this.fromDigit = true;
         const i = Number(d) - 1;
         if (i >= 0 && i < SKINS.length) this.showIndex(i);

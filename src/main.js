@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { initPhoneInput } from './input/PhoneInput.js';
 import { initSfx } from './audio/Sfx.js';
+import { initMusic } from './audio/Music.js';
 import { applySkin, getSkin } from './skins/SkinManager.js';
 import BootScene from './scenes/BootScene.js';
 import MenuScene from './scenes/MenuScene.js';
@@ -15,6 +16,7 @@ import SkinScene from './scenes/SkinScene.js';
 // Wire up the on-screen keypad and the physical keyboard
 initPhoneInput();
 initSfx();
+initMusic();
 
 // Paint the saved phone skin onto the HTML bezel before the canvas starts
 applySkin();

@@ -3,6 +3,7 @@ import { bindPhoneInput, setSoftKeys } from '../input/PhoneInput.js';
 import { hexToInt } from '../skins/skins.js';
 import { getSkin } from '../skins/SkinManager.js';
 import * as Sfx from '../audio/Sfx.js';
+import * as Music from '../audio/Music.js';
 
 const GAMES = [
   { name: 'Snake: Trail', scene: 'SnakeScene', bestKey: 'vpg.snake.best' },
@@ -63,8 +64,9 @@ export default class MenuScene extends Phaser.Scene {
       ...mono('18px', pal.bg), backgroundColor: pal.fg, padding: { x: 14, y: 8 }
     }).setOrigin(0.5).setAlpha(0);
 
-    this.add.text(180, 452, '▲▼ choose  •  OK play  •  1-6  •  0 sound', mono('13px', pal.dim)).setOrigin(0.5);
-    this.soundText = this.add.text(180, 418, Sfx.soundLabel(), mono('16px', pal.accent)).setOrigin(0.5);
+    this.soundText = this.add.text(180, 404, '', mono('16px', pal.accent)).setOrigin(0.5);
+    this.add.text(180, 434, '▲▼ choose  •  OK play  •  1-6 games', mono('13px', pal.dim)).setOrigin(0.5);
+    this.add.text(180, 454, '0 sound  •  9 music  •  M / N', mono('13px', pal.dim)).setOrigin(0.5);
 
     setSoftKeys('Select', 'Phone');
     bindPhoneInput(this, {
@@ -82,6 +84,11 @@ export default class MenuScene extends Phaser.Scene {
           this.refreshSound();
           return;
         }
+        if (d === '9') {
+          Music.toggle();
+          this.refreshSound();
+          return;
+        }
         this.fromDigit = true;
         const i = Number(d) - 1;
         if (i >= 0 && i < GAMES.length) {
@@ -94,10 +101,13 @@ export default class MenuScene extends Phaser.Scene {
 
     window.__vpg = window.__vpg || {};
     window.__vpg.menu = this;
+    Music.enter('menu');
     this.refreshSound();
     const unsubMute = Sfx.onMuteChange(() => this.refreshSound());
+    const unsubMusic = Music.onMusicChange(() => this.refreshSound());
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       unsubMute();
+      unsubMusic();
       if (window.__vpg && window.__vpg.menu === this) delete window.__vpg.menu;
     });
 
@@ -106,7 +116,7 @@ export default class MenuScene extends Phaser.Scene {
 
   refreshSound() {
     if (this.soundText && this.soundText.active) {
-      this.soundText.setText(Sfx.soundLabel());
+      this.soundText.setText(`${Sfx.soundLabel()}    ${Music.musicLabel()}`);
     }
   }
 

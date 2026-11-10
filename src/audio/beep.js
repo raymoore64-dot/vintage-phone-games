@@ -11,17 +11,31 @@
  * Playback is gated while a game is paused (except allowlisted UI
  * ticks) and while the tab is hidden. Frequent effects can be
  * throttled, and a voice cap stops beeps stacking into noise.
+ *
+ * Graph:
+ *   SFX voices  -> sfxGain -> sfxComp -> mix -> limiter -> lowpass -> dest
+ *   Music bus   -> musicGain ----------> mix
+ *
+ * SFX peaks sit around 0.10–0.15 into a master of 0.65, then a
+ * compressor/limiter stops stacked voices from clipping. Music has
+ * its own quieter bus (0.065) so it never competes with effects.
  */
 
 const MUTE_KEY = 'vpg.sound';
 const MAX_VOICES = 5;
-const MASTER_GAIN = 0.55;
+const SFX_MASTER = 0.65;
+const MUSIC_MASTER = 0.065;
 const LOWPASS_HZ = 1600;
+const PEAK_CAP = 0.25;
 
 let ctx = null;
 let unlocked = false;
 let muted = false;
-let master = null;
+let sfxGain = null;
+let musicGain = null;
+let sfxComp = null;
+let mix = null;
+let limiter = null;
 let filter = null;
 let voiceCount = 0;
 let monoOsc = null;
@@ -29,11 +43,26 @@ let monoGain = null;
 let listenersBound = false;
 const lastPlayed = new Map();
 const muteListeners = new Set();
+const unlockListeners = new Set();
 let muteToggleFn = null;
+let musicActiveFn = null;
 
 /** Let Sfx replace the M-key action (e.g. to play a confirmation click). */
 export function setMuteToggleHandler(fn) {
   muteToggleFn = typeof fn === 'function' ? fn : null;
+}
+
+/** Let Music tell the engine when the context should stay hot. */
+export function setMusicActiveFn(fn) {
+  musicActiveFn = typeof fn === 'function' ? fn : null;
+}
+
+function musicWantsContext() {
+  try {
+    return !!(musicActiveFn && musicActiveFn());
+  } catch {
+    return false;
+  }
 }
 
 function readMute() {
@@ -54,6 +83,43 @@ function writeMute(isOff) {
 
 muted = readMute();
 
+function buildGraph(c) {
+  sfxGain = c.createGain();
+  sfxGain.gain.value = SFX_MASTER;
+
+  sfxComp = c.createDynamicsCompressor();
+  sfxComp.threshold.value = -10;
+  sfxComp.knee.value = 8;
+  sfxComp.ratio.value = 8;
+  sfxComp.attack.value = 0.004;
+  sfxComp.release.value = 0.15;
+
+  musicGain = c.createGain();
+  musicGain.gain.value = MUSIC_MASTER;
+
+  mix = c.createGain();
+  mix.gain.value = 1;
+
+  limiter = c.createDynamicsCompressor();
+  limiter.threshold.value = -1.5;
+  limiter.knee.value = 0.5;
+  limiter.ratio.value = 20;
+  limiter.attack.value = 0.001;
+  limiter.release.value = 0.05;
+
+  filter = c.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = LOWPASS_HZ;
+  filter.Q.value = 0.5;
+
+  sfxGain.connect(sfxComp);
+  sfxComp.connect(mix);
+  musicGain.connect(mix);
+  mix.connect(limiter);
+  limiter.connect(filter);
+  filter.connect(c.destination);
+}
+
 function getCtx() {
   if (ctx) return ctx;
   if (!unlocked) return null;
@@ -61,24 +127,26 @@ function getCtx() {
   if (!AC) return null;
   try {
     ctx = new AC();
-    master = ctx.createGain();
-    master.gain.value = MASTER_GAIN;
-    filter = ctx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.value = LOWPASS_HZ;
-    filter.Q.value = 0.5;
-    master.connect(filter);
-    filter.connect(ctx.destination);
+    buildGraph(ctx);
+    try {
+      ctx.addEventListener('statechange', () => {
+        if (ctx && ctx.state === 'running') notifyUnlock();
+      });
+    } catch { /* ignore */ }
   } catch {
     ctx = null;
-    master = null;
+    sfxGain = null;
+    musicGain = null;
+    sfxComp = null;
+    mix = null;
+    limiter = null;
     filter = null;
   }
   return ctx;
 }
 
 function dest() {
-  return master || (ctx && ctx.destination);
+  return sfxGain || (ctx && ctx.destination);
 }
 
 function swallow(p) {
@@ -90,6 +158,24 @@ function resumeCtx() {
   if (!c) return null;
   if (c.state === 'suspended') swallow(c.resume());
   return c;
+}
+
+/** Resume the context if anything (SFX or music) still wants it. */
+export function resumeIfAllowed() {
+  try {
+    if (!unlocked || !ctx) return;
+    if (typeof document !== 'undefined' && document.hidden) return;
+    if (muted && !musicWantsContext()) return;
+    if (ctx.state === 'suspended') swallow(ctx.resume());
+  } catch {
+    // ignore
+  }
+}
+
+function notifyUnlock() {
+  unlockListeners.forEach((fn) => {
+    try { fn(); } catch { /* listener errors shouldn't break audio */ }
+  });
 }
 
 /** Call from a click / key / touch so the browser will allow sound. */
@@ -109,9 +195,44 @@ export function unlockAudio() {
     } catch {
       // ignore
     }
+    notifyUnlock();
   } catch {
     // ignore
   }
+}
+
+export function onAudioUnlock(fn) {
+  unlockListeners.add(fn);
+  if (unlocked && ctx) {
+    try { fn(); } catch { /* ignore */ }
+  }
+  return () => unlockListeners.delete(fn);
+}
+
+export function getAudioContext() {
+  return ctx;
+}
+
+export function getMusicInput() {
+  if (!ctx) getCtx();
+  return musicGain || (ctx && ctx.destination);
+}
+
+export function getAudioGraph() {
+  return {
+    context: ctx,
+    state: ctx ? ctx.state : 'none',
+    sfxGain,
+    musicGain,
+    compressor: sfxComp,
+    mix,
+    limiter,
+    filter,
+    sfxMaster: SFX_MASTER,
+    musicMaster: MUSIC_MASTER,
+    voiceCount,
+    peakCap: PEAK_CAP
+  };
 }
 
 export function isMuted() {
@@ -149,6 +270,7 @@ export function setMuted(nextMuted) {
   muteListeners.forEach((fn) => {
     try { fn(muted); } catch { /* listener errors shouldn't break audio */ }
   });
+  if (!muted) resumeIfAllowed();
   return muted;
 }
 
@@ -267,9 +389,9 @@ function readyLive() {
  * @param {number} freq      Hz
  * @param {number} duration  seconds
  * @param {string} type      oscillator type, or 'pulse'
- * @param {number} gain      peak gain (keep small)
+ * @param {number} gain      peak gain (keep under PEAK_CAP)
  */
-export function beep(freq = 440, duration = 0.16, type = 'square', gain = 0.08) {
+export function beep(freq = 440, duration = 0.16, type = 'square', gain = 0.14) {
   try {
     const c = readyLive();
     if (!c) return;
@@ -284,7 +406,7 @@ export function beep(freq = 440, duration = 0.16, type = 'square', gain = 0.08) 
     osc.frequency.value = f;
     const now = c.currentTime;
     const dur = Math.max(0.02, duration);
-    const peak = Math.max(0.0001, Math.min(gain, 0.2));
+    const peak = Math.max(0.0001, Math.min(gain, PEAK_CAP));
     g.gain.setValueAtTime(0.0001, now);
     g.gain.exponentialRampToValueAtTime(peak, now + 0.01);
     g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
@@ -323,14 +445,14 @@ export function playPhrase(notes, opts = {}) {
     } else {
       osc.type = type;
     }
-    const baseGain = opts.gain != null ? opts.gain : 0.06;
+    const baseGain = opts.gain != null ? opts.gain : 0.14;
     const now = c.currentTime;
     g.gain.setValueAtTime(0.0001, now);
     let t = now;
     notes.forEach((n, i) => {
       const f = Math.max(40, Math.min(n.f, 1400));
       const d = Math.max(0.02, n.d);
-      const peak = Math.max(0.0001, Math.min(n.gain != null ? n.gain : baseGain, 0.2));
+      const peak = Math.max(0.0001, Math.min(n.gain != null ? n.gain : baseGain, PEAK_CAP));
       if (i === 0) osc.frequency.setValueAtTime(f, t);
       else osc.frequency.setValueAtTime(f, t);
       g.gain.setValueAtTime(0.0001, t);
@@ -365,7 +487,7 @@ export function playPhrase(notes, opts = {}) {
  * @param {number} gain
  * @param {number} [cutoff] lowpass Hz
  */
-export function noise(duration = 0.18, gain = 0.07, cutoff = 800) {
+export function noise(duration = 0.18, gain = 0.16, cutoff = 800) {
   try {
     const c = readyLive();
     if (!c) return;
@@ -385,7 +507,7 @@ export function noise(duration = 0.18, gain = 0.07, cutoff = 800) {
     lp.frequency.value = Math.max(120, Math.min(cutoff, 1800));
     const g = c.createGain();
     const now = c.currentTime;
-    const peak = Math.max(0.0001, Math.min(gain, 0.2));
+    const peak = Math.max(0.0001, Math.min(gain, PEAK_CAP));
     g.gain.setValueAtTime(0.0001, now);
     g.gain.exponentialRampToValueAtTime(peak, now + 0.008);
     g.gain.exponentialRampToValueAtTime(0.0001, now + len);
@@ -413,8 +535,8 @@ function onVisibility() {
     if (!ctx) return;
     if (document.hidden) {
       if (ctx.state === 'running') swallow(ctx.suspend());
-    } else if (unlocked && !muted) {
-      swallow(ctx.resume());
+    } else {
+      resumeIfAllowed();
     }
   } catch {
     // ignore
@@ -465,12 +587,26 @@ export async function renderOffline(kind, spec = {}) {
     const rate = 22050;
     const seconds = spec.seconds || 1.2;
     const c = new AC(1, Math.floor(rate * seconds), rate);
-    const out = c.createGain();
-    out.gain.value = MASTER_GAIN;
+    const sg = c.createGain();
+    sg.gain.value = SFX_MASTER;
+    const comp = c.createDynamicsCompressor();
+    comp.threshold.value = -10;
+    comp.knee.value = 8;
+    comp.ratio.value = 8;
+    comp.attack.value = 0.004;
+    comp.release.value = 0.15;
+    const outLim = c.createDynamicsCompressor();
+    outLim.threshold.value = -1.5;
+    outLim.knee.value = 0.5;
+    outLim.ratio.value = 20;
+    outLim.attack.value = 0.001;
+    outLim.release.value = 0.05;
     const lp = c.createBiquadFilter();
     lp.type = 'lowpass';
     lp.frequency.value = LOWPASS_HZ;
-    out.connect(lp);
+    sg.connect(comp);
+    comp.connect(outLim);
+    outLim.connect(lp);
     lp.connect(c.destination);
     if (kind === 'noise') {
       const len = spec.duration || 0.2;
@@ -484,31 +620,34 @@ export async function renderOffline(kind, spec = {}) {
       const src = c.createBufferSource();
       src.buffer = buf;
       const g = c.createGain();
-      const peak = spec.gain || 0.08;
+      const peak = spec.gain || 0.16;
       g.gain.setValueAtTime(0.0001, 0);
-      g.gain.exponentialRampToValueAtTime(peak, 0.008);
+      g.gain.exponentialRampToValueAtTime(Math.min(peak, PEAK_CAP), 0.008);
       g.gain.exponentialRampToValueAtTime(0.0001, len);
       src.connect(g);
-      g.connect(out);
+      g.connect(sg);
       src.start(0);
     } else {
       const notes = spec.notes || [{ f: 440, d: 0.12 }];
       const osc = c.createOscillator();
       osc.type = 'square';
       const g = c.createGain();
-      const gain = spec.gain || 0.06;
+      const gain = spec.gain || 0.14;
       let t = 0;
       g.gain.setValueAtTime(0.0001, 0);
-      notes.forEach((n, i) => {
+      notes.forEach((n) => {
         osc.frequency.setValueAtTime(Math.max(40, Math.min(n.f, 1400)), t);
         g.gain.setValueAtTime(0.0001, t);
-        g.gain.exponentialRampToValueAtTime(n.gain != null ? n.gain : gain, t + 0.008);
+        g.gain.exponentialRampToValueAtTime(
+          Math.min(n.gain != null ? n.gain : gain, PEAK_CAP),
+          t + 0.008
+        );
         t += n.d;
         g.gain.exponentialRampToValueAtTime(0.0001, t);
         t += n.gap != null ? n.gap : 0.018;
       });
       osc.connect(g);
-      g.connect(out);
+      g.connect(sg);
       osc.start(0);
       osc.stop(t + 0.03);
     }
@@ -525,6 +664,13 @@ export async function renderOffline(kind, spec = {}) {
   }
 }
 
+export {
+  SFX_MASTER,
+  MUSIC_MASTER,
+  PEAK_CAP,
+  MAX_VOICES
+};
+
 export default {
   beep,
   unlockAudio,
@@ -537,11 +683,16 @@ export default {
   setMuted,
   toggleMute,
   onMuteChange,
+  onAudioUnlock,
   canPlay,
   playPhrase,
   noise,
   initAudio,
   resetSfxLog,
   logSfx,
-  renderOffline
+  renderOffline,
+  getAudioContext,
+  getMusicInput,
+  getAudioGraph,
+  resumeIfAllowed
 };

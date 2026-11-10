@@ -5,6 +5,7 @@ import { hexToInt, shadeHex } from '../skins/skins.js';
 import { getSkin } from '../skins/SkinManager.js';
 import { addScore, formatUnlockLine } from '../progress/Progress.js';
 import * as Sfx from '../audio/Sfx.js';
+import * as Music from '../audio/Music.js';
 
 const W = 360;
 const H = 480;
@@ -176,6 +177,7 @@ export default class BlocksScene extends Phaser.Scene {
 
     this.spawn(this.takeNext());
     this.pauseCtl = attachPause(this);
+    Music.enter('blocks');
     this.draw();
   }
 
@@ -535,6 +537,7 @@ export default class BlocksScene extends Phaser.Scene {
       this.bestText.setText(`Best: ${this.best}`);
     }
     const unlockMsg = formatUnlockLine(addScore('blocks', this.score));
+    Music.stop();
     Sfx.playEnd({ newBest, unlocked: !!unlockMsg });
 
     this.add.rectangle(180, 270, 300, unlockMsg ? 240 : 220, 0x000000, 0.8).setStrokeStyle(2, pal.fg);

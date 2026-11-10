@@ -33,6 +33,7 @@ import { bindPhoneInput, setSoftKeys, getSoftKeys } from '../input/PhoneInput.js
 import { hexToInt } from '../skins/skins.js';
 import { getSkin } from '../skins/SkinManager.js';
 import * as Sfx from '../audio/Sfx.js';
+import * as Music from '../audio/Music.js';
 
 function publish(ctl) {
   window.__vpg = window.__vpg || {};
@@ -82,7 +83,7 @@ export function attachPause(scene) {
     .setDepth(1000)
     .setVisible(false);
 
-  const panel = scene.add.rectangle(180, 240, 284, 228, hexToInt(pal.panel), 1)
+  const panel = scene.add.rectangle(180, 244, 284, 248, hexToInt(pal.panel), 1)
     .setStrokeStyle(3, hexToInt(pal.fg))
     .setScrollFactor(0)
     .setDepth(1001)
@@ -105,16 +106,19 @@ export function attachPause(scene) {
     .setOrigin(0.5).setScrollFactor(0).setDepth(1002).setVisible(false);
   const line3 = scene.add.text(180, 286, 'P or # to pause', style('14px', pal.accent))
     .setOrigin(0.5).setScrollFactor(0).setDepth(1002).setVisible(false);
-  const soundLine = scene.add.text(180, 318, '', style('14px', pal.dim))
+  const soundLine = scene.add.text(180, 322, '', { ...style('13px', pal.dim), lineSpacing: 4, wordWrap: { width: 260 } })
     .setOrigin(0.5).setScrollFactor(0).setDepth(1002).setVisible(false);
 
   const nodes = [dim, panel, title, line1, line2, line3, soundLine];
 
   function refreshSoundLine() {
-    soundLine.setText(Sfx.isMuted() ? 'Sound: Off  ·  M unmute' : 'Sound: On  ·  M mute');
+    const s = Sfx.isMuted() ? 'Sound: Off  ·  M unmute' : 'Sound: On  ·  M mute';
+    const m = Music.isMusicEnabled() ? 'Music: On  ·  N off' : 'Music: Off  ·  N on';
+    soundLine.setText(`${s}\n${m}`);
   }
   refreshSoundLine();
   const unsubMute = Sfx.onMuteChange(() => refreshSoundLine());
+  const unsubMusic = Music.onMusicChange(() => refreshSoundLine());
 
   function showPausedVisual() {
     title.setText('PAUSED').setFontSize(36);
@@ -186,6 +190,7 @@ export function attachPause(scene) {
     setSoftKeys('Resume', 'Menu');
     showPausedVisual();
     publish(ctl);
+    Music.pause('game');
     if (!(opts && opts.silent)) Sfx.pause();
     return true;
   }
@@ -225,6 +230,7 @@ export function attachPause(scene) {
     unfreezeClock();
     setSoftKeys(state.savedSoft.left || '', state.savedSoft.right || '');
     publish(ctl);
+    Music.resume('game');
     Sfx.resume();
   }
 
@@ -237,6 +243,8 @@ export function attachPause(scene) {
     unfreezeClock();
     setSoftKeys('', '');
     publish(null);
+    Music.resume('game');
+    Music.setDuck(1);
     scene.scene.start('MenuScene');
   }
 
@@ -251,6 +259,7 @@ export function attachPause(scene) {
       setSoftKeys('Resume', 'Menu');
       showPausedVisual();
       publish(ctl);
+      Music.pause('game');
       return;
     }
     pause({ silent: true });
@@ -302,6 +311,8 @@ export function attachPause(scene) {
     state.shutdown = true;
     clearTimers();
     if (typeof unsubMute === 'function') unsubMute();
+    if (typeof unsubMusic === 'function') unsubMusic();
+    Music.resume('game');
     document.removeEventListener('visibilitychange', visHandler);
     window.removeEventListener('blur', blurHandler);
     if (scene.__pauseCtl === ctl) scene.__pauseCtl = null;
