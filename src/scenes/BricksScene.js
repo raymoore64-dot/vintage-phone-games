@@ -4,6 +4,7 @@ import { attachPause, isFrozen, gameNow } from '../ui/PauseOverlay.js';
 import { hexToInt, shadeHex } from '../skins/skins.js';
 import { getSkin } from '../skins/SkinManager.js';
 import { addScore, formatUnlockLine } from '../progress/Progress.js';
+import * as Sfx from '../audio/Sfx.js';
 
 const W = 360;
 const H = 480;
@@ -138,6 +139,7 @@ export default class BricksScene extends Phaser.Scene {
     this.nudgeArmedUntil = now + NUDGE_WINDOW;
     this.nudgeReadyAt = now + NUDGE_COOLDOWN;
     this.floatText(this.paddleX, PADDLE_Y - 18, 'NUDGE', this.pal.css.warn);
+    Sfx.bricksNudge();
   }
 
   // ---- Level layouts ----------------------------------------------------
@@ -295,6 +297,7 @@ export default class BricksScene extends Phaser.Scene {
     const cap = nudged ? MAX_SPEED : MAX_SPEED - 20;
     this.clampSpeed(cap);
     void angle;
+    Sfx.bricksPaddle();
   }
 
   bounceBricks() {
@@ -338,11 +341,13 @@ export default class BricksScene extends Phaser.Scene {
       this.score += gained;
       this.floatText(brick.x + brick.w / 2, brick.y, n > 1 ? `CHAIN x${n} +${gained}` : `+${gained}`, this.pal.css.warn);
       this.cameras.main.shake(80 + Math.min(120, n * 20), 0.004 + n * 0.001);
+      Sfx.bricksChain(n);
     } else {
       brick.alive = false;
       removed.push(brick);
       this.score += 10;
       this.flashBrick(brick, this.pal.fg, 180);
+      Sfx.bricksBrick();
     }
     this.checkCleared();
     return removed;
@@ -398,6 +403,7 @@ export default class BricksScene extends Phaser.Scene {
   loseLife() {
     this.lives -= 1;
     this.cameras.main.shake(140, 0.008);
+    Sfx.bricksLifeLost();
     if (this.lives <= 0) {
       this.gameOver('No lives left');
       return;
@@ -545,6 +551,7 @@ export default class BricksScene extends Phaser.Scene {
       this.bestText.setText(`Best: ${this.best}`);
     }
     const unlockMsg = formatUnlockLine(addScore('bricks', this.score));
+    Sfx.playEnd({ newBest, unlocked: !!unlockMsg });
 
     this.add.rectangle(180, 270, 300, unlockMsg ? 240 : 220, 0x000000, 0.8).setStrokeStyle(2, pal.fg);
     const style = (size, color) => ({ fontSize: size, color, fontFamily: 'monospace', align: 'center', wordWrap: { width: 280 } });

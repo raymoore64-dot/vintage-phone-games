@@ -4,6 +4,7 @@ import { attachPause, isFrozen, gameNow } from '../ui/PauseOverlay.js';
 import { hexToInt, shadeHex } from '../skins/skins.js';
 import { getSkin } from '../skins/SkinManager.js';
 import { addScore, formatUnlockLine } from '../progress/Progress.js';
+import * as Sfx from '../audio/Sfx.js';
 
 // ---- Tuning -------------------------------------------------------------
 const W = 360;
@@ -128,6 +129,7 @@ export default class ImpactScene extends Phaser.Scene {
     this.burstUntil = now + BURST_DURATION;
     this.burstReadyAt = this.burstUntil + BURST_COOLDOWN;
     this.floatText(this.ship.x, this.ship.y - 16, 'ECHO BURST', this.pal.css.warn);
+    Sfx.impactBurst();
   }
 
   // ---- Game loop --------------------------------------------------------
@@ -218,6 +220,7 @@ export default class ImpactScene extends Phaser.Scene {
     for (const ev of this.tape) {
       if (ev.fire && ev.t > this.lastGhostT && ev.t <= target) {
         this.spawnBullet(ev.x + 12, ev.y, BULLET_SPEED, 0, true, true);
+        Sfx.impactGhostShot();
       }
     }
     this.lastGhostT = target;
@@ -253,9 +256,11 @@ export default class ImpactScene extends Phaser.Scene {
       this.lastFire = now;
       this.firedThisFrame = true;
       this.spawnBullet(this.ship.x + 12, this.ship.y, BULLET_SPEED, 0, true, false);
+      Sfx.impactShoot();
       if (now < this.burstUntil) {
         // During burst the wingman fires with you
         this.spawnBullet(this.ghost.x + 12, this.ghost.y, BULLET_SPEED, 0, true, true);
+        Sfx.impactGhostShot();
       }
     }
   }
@@ -398,6 +403,7 @@ export default class ImpactScene extends Phaser.Scene {
     this.boss = boss;
     this.enemies.push(boss);
     this.floatText(W / 2, HUD_H + 40, 'BOSS', this.pal.css.warn);
+    Sfx.impactBoss();
   }
 
   // ---- Combat -----------------------------------------------------------
@@ -412,6 +418,7 @@ export default class ImpactScene extends Phaser.Scene {
           b.life = 0;
           e.hp -= 1;
           if (e.hp <= 0) this.killEnemy(e);
+          else Sfx.impactHit();
           break;
         }
       }
@@ -453,6 +460,7 @@ export default class ImpactScene extends Phaser.Scene {
           this.shield = true;
           this.floatText(this.ship.x, this.ship.y, 'SHIELD', this.pal.css.accent);
         }
+        Sfx.impactPickup();
       }
     }
   }
@@ -461,6 +469,7 @@ export default class ImpactScene extends Phaser.Scene {
     this.score += e.score;
     this.killed += 1;
     this.floatText(e.x, e.y, `+${e.score}`, this.pal.css.text);
+    Sfx.impactExplosion();
     if (e.kind === 'boss') {
       this.boss = null;
       this.dropPickup(e.x, e.y, Math.random() < 0.5 ? 'rapid' : 'shield');
@@ -480,10 +489,12 @@ export default class ImpactScene extends Phaser.Scene {
       this.invulnUntil = gameNow(this) + 700;
       this.cameras.main.shake(80, 0.004);
       this.floatText(this.ship.x, this.ship.y, 'SHIELD!', this.pal.css.accent);
+      Sfx.impactPlayerHit();
       return;
     }
     this.lives -= 1;
     this.cameras.main.shake(160, 0.01);
+    Sfx.impactPlayerHit();
     if (this.lives <= 0) {
       this.gameOver('Ship destroyed');
       return;
@@ -664,6 +675,7 @@ export default class ImpactScene extends Phaser.Scene {
     }
 
     const unlockMsg = formatUnlockLine(addScore('impact', this.score));
+    Sfx.playEnd({ newBest, unlocked: !!unlockMsg });
 
     this.add.rectangle(180, 270, 300, unlockMsg ? 240 : 220, 0x000000, 0.8).setStrokeStyle(2, pal.fg);
     const style = (size, color) => ({ fontSize: size, color, fontFamily: 'monospace', align: 'center', wordWrap: { width: 280 } });

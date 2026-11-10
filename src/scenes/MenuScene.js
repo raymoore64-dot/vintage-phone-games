@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { bindPhoneInput, setSoftKeys } from '../input/PhoneInput.js';
 import { hexToInt } from '../skins/skins.js';
 import { getSkin } from '../skins/SkinManager.js';
+import * as Sfx from '../audio/Sfx.js';
 
 const GAMES = [
   { name: 'Snake: Trail', scene: 'SnakeScene', bestKey: 'vpg.snake.best' },
@@ -62,7 +63,8 @@ export default class MenuScene extends Phaser.Scene {
       ...mono('18px', pal.bg), backgroundColor: pal.fg, padding: { x: 14, y: 8 }
     }).setOrigin(0.5).setAlpha(0);
 
-    this.add.text(180, 452, '▲▼ choose  •  OK play  •  1-6', mono('13px', pal.dim)).setOrigin(0.5);
+    this.add.text(180, 452, '▲▼ choose  •  OK play  •  1-6  •  0 sound', mono('13px', pal.dim)).setOrigin(0.5);
+    this.soundText = this.add.text(180, 418, Sfx.soundLabel(), mono('16px', pal.accent)).setOrigin(0.5);
 
     setSoftKeys('Select', 'Phone');
     bindPhoneInput(this, {
@@ -70,8 +72,16 @@ export default class MenuScene extends Phaser.Scene {
       down: () => this.onDown(),
       ok: () => this.onLaunch(),
       softLeft: () => this.onLaunch(),
-      softRight: () => this.scene.start('SkinScene'),
+      softRight: () => {
+        Sfx.menuSelect();
+        this.scene.start('SkinScene');
+      },
       digit: (d) => {
+        if (d === '0') {
+          Sfx.toggleMuteWithClick();
+          this.refreshSound();
+          return;
+        }
         this.fromDigit = true;
         const i = Number(d) - 1;
         if (i >= 0 && i < GAMES.length) {
@@ -84,11 +94,20 @@ export default class MenuScene extends Phaser.Scene {
 
     window.__vpg = window.__vpg || {};
     window.__vpg.menu = this;
+    this.refreshSound();
+    const unsubMute = Sfx.onMuteChange(() => this.refreshSound());
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      unsubMute();
       if (window.__vpg && window.__vpg.menu === this) delete window.__vpg.menu;
     });
 
     this.select(0);
+  }
+
+  refreshSound() {
+    if (this.soundText && this.soundText.active) {
+      this.soundText.setText(Sfx.soundLabel());
+    }
   }
 
   onUp() {
@@ -133,7 +152,10 @@ export default class MenuScene extends Phaser.Scene {
 
   select(i) {
     const pal = getSkin().palette;
-    this.index = (i + GAMES.length) % GAMES.length;
+    const next = (i + GAMES.length) % GAMES.length;
+    const changed = next !== this.index;
+    this.index = next;
+    if (changed) Sfx.menuMove();
     this.keepInView(this.index);
     this.layoutRows();
     this.rows.forEach((row, j) => {
@@ -157,6 +179,7 @@ export default class MenuScene extends Phaser.Scene {
   launch() {
     const game = GAMES[this.index];
     if (game.scene) {
+      Sfx.menuSelect();
       this.scene.start(game.scene);
     } else {
       this.showToast('Coming soon!');

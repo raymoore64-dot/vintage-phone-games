@@ -4,6 +4,7 @@ import { attachPause, isFrozen, gameNow } from '../ui/PauseOverlay.js';
 import { hexToInt, shadeHex } from '../skins/skins.js';
 import { getSkin } from '../skins/SkinManager.js';
 import { addScore, formatUnlockLine } from '../progress/Progress.js';
+import * as Sfx from '../audio/Sfx.js';
 
 // ---- Tuning -------------------------------------------------------------
 const W = 360;
@@ -128,6 +129,7 @@ export default class BounceScene extends Phaser.Scene {
     this.cameras.main.shake(60, 0.003);
     this.floatText(this.ball.x, this.ball.y - this.gravSign * 18, 'FLIP', this.pal.css.warn);
     this.updateGravLabel();
+    Sfx.bounceFlip();
   }
 
   vyDampenOnFlip() {
@@ -225,6 +227,7 @@ export default class BounceScene extends Phaser.Scene {
         if (this.ball.vy > 0) {
           this.ball.vy = -BOUNCE_SPEED;
           this.squash = 1;
+          Sfx.bounceBounce();
         }
       }
     } else if (this.ball.y > H + 40) {
@@ -238,6 +241,7 @@ export default class BounceScene extends Phaser.Scene {
         if (this.ball.vy < 0) {
           this.ball.vy = BOUNCE_SPEED;
           this.squash = 1;
+          Sfx.bounceBounce();
         }
       }
     } else if (this.ball.y < HUD_H - 40) {
@@ -318,6 +322,8 @@ export default class BounceScene extends Phaser.Scene {
           this.score += gain;
           const label = this.combo > 1 ? `+${gain} x${this.combo}` : `+${gain}`;
           this.floatText(ring.x, ring.y, label, this.combo > 1 ? this.pal.css.warn : this.pal.css.text);
+          if (this.combo > 1) Sfx.bounceCombo();
+          else Sfx.bounceRing();
         }
       }
     }
@@ -335,6 +341,7 @@ export default class BounceScene extends Phaser.Scene {
         seg.pairBonus = true;
         this.score += 50;
         this.floatText(a.x, (lo + hi) / 2, 'FLIP THRU +50', this.pal.css.warn);
+        Sfx.bounceCombo();
       }
     }
   }
@@ -633,6 +640,8 @@ export default class BounceScene extends Phaser.Scene {
     }
 
     const unlockMsg = formatUnlockLine(addScore('bounce', this.score));
+    Sfx.bounceDeath();
+    Sfx.playEnd({ newBest, unlocked: !!unlockMsg });
 
     this.add.rectangle(180, 270, 300, unlockMsg ? 240 : 220, 0x000000, 0.8).setStrokeStyle(2, pal.fg);
     const style = (size, color) => ({ fontSize: size, color, fontFamily: 'monospace', align: 'center', wordWrap: { width: 280 } });

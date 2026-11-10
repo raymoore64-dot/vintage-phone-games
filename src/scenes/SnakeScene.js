@@ -4,6 +4,7 @@ import { attachPause, isFrozen, gameNow } from '../ui/PauseOverlay.js';
 import { hexToInt, shadeHex } from '../skins/skins.js';
 import { getSkin } from '../skins/SkinManager.js';
 import { addScore, formatUnlockLine } from '../progress/Progress.js';
+import * as Sfx from '../audio/Sfx.js';
 
 // ---- Tuning -------------------------------------------------------------
 const GRID = 20;            // cell size in px
@@ -145,6 +146,7 @@ export default class SnakeScene extends Phaser.Scene {
     }
 
     this.cleanTrail();
+    this.warnTrail();
     this.updateShedButton();
     this.draw();
   }
@@ -201,6 +203,7 @@ export default class SnakeScene extends Phaser.Scene {
       this.floatText(head, bonus > 0 ? `+${gain}!` : `+${gain}`, bonus > 0 ? this.pal.css.warn : this.pal.css.text);
       this.food = this.spawnFood();
       this.moveInterval = Math.max(MIN_INTERVAL, this.moveInterval - 3);
+      Sfx.snakeEat();
     } else {
       const tail = this.snake.pop();
       this.addTrail(tail, now);
@@ -239,6 +242,7 @@ export default class SnakeScene extends Phaser.Scene {
     this.shedReadyAt = now + SHED_COOLDOWN;
     this.cameras.main.shake(80, 0.004);
     this.floatText(head, 'SHED!', this.pal.css.accent);
+    Sfx.snakeShed();
   }
 
   updateShedButton() {
@@ -250,6 +254,18 @@ export default class SnakeScene extends Phaser.Scene {
       this.shedLabel = label;
       setSoftKeys(label, 'Menu');
     }
+  }
+
+  warnTrail() {
+    const now = gameNow(this);
+    const WARN = 400;
+    this.trail.forEach((c) => {
+      const age = now - c.born;
+      if (age >= GLOW_MS - WARN && age < GLOW_MS && !c.warned) {
+        c.warned = true;
+        Sfx.snakeTrailWarn();
+      }
+    });
   }
 
   // ---- Spawning & effects -------------------------------------------------
@@ -340,6 +356,8 @@ export default class SnakeScene extends Phaser.Scene {
     }
 
     const unlockMsg = formatUnlockLine(addScore('snake', this.score));
+    Sfx.snakeCrash();
+    Sfx.playEnd({ newBest, unlocked: !!unlockMsg });
 
     this.add.rectangle(180, 270, 300, unlockMsg ? 240 : 220, 0x000000, 0.8).setStrokeStyle(2, pal.fg);
     const style = (size, color) => ({ fontSize: size, color, fontFamily: 'monospace', align: 'center', wordWrap: { width: 280 } });

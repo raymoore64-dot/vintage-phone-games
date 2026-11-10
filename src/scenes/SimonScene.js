@@ -4,7 +4,7 @@ import { attachPause, isFrozen, gameNow } from '../ui/PauseOverlay.js';
 import { hexToInt, shadeHex } from '../skins/skins.js';
 import { getSkin } from '../skins/SkinManager.js';
 import { addScore, formatUnlockLine } from '../progress/Progress.js';
-import { beep, unlockAudio } from '../audio/beep.js';
+import * as Sfx from '../audio/Sfx.js';
 
 const W = 360;
 const H = 480;
@@ -96,7 +96,7 @@ export default class SimonScene extends Phaser.Scene {
 
     bindPhoneInput(this, {
       digit: (d) => {
-        unlockAudio();
+        Sfx.unlockAudio();
         this.fromDigit = true;
         this.onDigit(d);
         queueMicrotask(() => { this.fromDigit = false; });
@@ -115,7 +115,7 @@ export default class SimonScene extends Phaser.Scene {
     // Tap a cell on the canvas
     this.input.on('pointerdown', (p) => {
       if (isFrozen(this)) return;
-      unlockAudio();
+      Sfx.unlockAudio();
       if (!this.alive) {
         if (this.canRestart) this.scene.restart();
         return;
@@ -144,7 +144,7 @@ export default class SimonScene extends Phaser.Scene {
   }
 
   onCursor(dx, dy) {
-    unlockAudio();
+    Sfx.unlockAudio();
     if (this.fromDigit) {
       this.fromDigit = false;
       return;
@@ -159,7 +159,7 @@ export default class SimonScene extends Phaser.Scene {
   }
 
   onOk() {
-    unlockAudio();
+    Sfx.unlockAudio();
     if (this.fromDigit) {
       this.fromDigit = false;
       return;
@@ -269,7 +269,7 @@ export default class SimonScene extends Phaser.Scene {
   }
 
   playTone(cell) {
-    beep(TONES[cell], 0.16, 'square', 0.09);
+    Sfx.simonTone(cell);
   }
 
   hitCell(x, y) {
@@ -412,7 +412,6 @@ export default class SimonScene extends Phaser.Scene {
     this.phase = 'over';
     setSoftKeys('Retry', 'Menu');
     this.cameras.main.shake(200, 0.01);
-    beep(110, 0.35, 'sawtooth', 0.08);
     this.draw();
     const pal = this.pal;
 
@@ -423,6 +422,7 @@ export default class SimonScene extends Phaser.Scene {
       this.bestText.setText(`Best: ${this.best}`);
     }
     const unlockMsg = formatUnlockLine(addScore('simon', this.score));
+    Sfx.playEnd({ newBest, unlocked: !!unlockMsg });
 
     this.add.rectangle(180, 270, 300, unlockMsg ? 240 : 220, 0x000000, 0.8).setStrokeStyle(2, pal.fg);
     const style = (size, color) => ({ fontSize: size, color, fontFamily: 'monospace', align: 'center', wordWrap: { width: 280 } });

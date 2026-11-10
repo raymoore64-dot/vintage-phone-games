@@ -4,6 +4,7 @@ import { attachPause, isFrozen, gameNow } from '../ui/PauseOverlay.js';
 import { hexToInt, shadeHex } from '../skins/skins.js';
 import { getSkin } from '../skins/SkinManager.js';
 import { addScore, formatUnlockLine } from '../progress/Progress.js';
+import * as Sfx from '../audio/Sfx.js';
 
 const W = 360;
 const H = 480;
@@ -229,6 +230,7 @@ export default class BlocksScene extends Phaser.Scene {
     this.piece = next;
     this.locking = false;
     this.lockTimer = 0;
+    if (dx !== 0) Sfx.blocksMove();
     return true;
   }
 
@@ -241,6 +243,7 @@ export default class BlocksScene extends Phaser.Scene {
         this.piece = next;
         this.locking = false;
         this.lockTimer = 0;
+        Sfx.blocksRotate();
         return true;
       }
     }
@@ -258,6 +261,7 @@ export default class BlocksScene extends Phaser.Scene {
 
   lockPiece() {
     if (!this.piece) return;
+    Sfx.blocksDrop();
     for (const [x, y] of this.cellsOf(this.piece)) {
       if (y < 0) {
         this.gameOver('Stack topped out');
@@ -289,12 +293,15 @@ export default class BlocksScene extends Phaser.Scene {
     this.grid = remaining;
     if (cleared > 0) {
       const table = [0, 100, 300, 500, 800];
+      const prevLevel = this.level;
       this.score += (table[cleared] || 800) * this.level;
       this.lines += cleared;
       this.level = 1 + Math.floor(this.lines / LINES_PER_LEVEL);
       this.quakeCharges = Math.min(MAX_QUAKE, this.quakeCharges + cleared);
       this.floatText(WELL_X + WELL_W / 2, WELL_Y + 40, cleared === 4 ? 'QUAD!' : `${cleared} LINE${cleared > 1 ? 'S' : ''}`, this.pal.css.warn);
       this.cameras.main.shake(60, 0.003);
+      Sfx.blocksLine(cleared);
+      if (this.level > prevLevel) Sfx.blocksLevelUp();
     }
     return cleared;
   }
@@ -330,6 +337,7 @@ export default class BlocksScene extends Phaser.Scene {
     }
     this.cameras.main.shake(180, 0.01);
     this.floatText(WELL_X + WELL_W / 2, WELL_Y + 30, 'QUAKE!', this.pal.css.warn);
+    Sfx.blocksQuake();
     const cleared = this.clearLines();
     return { settled, cleared };
   }
@@ -527,6 +535,7 @@ export default class BlocksScene extends Phaser.Scene {
       this.bestText.setText(`Best: ${this.best}`);
     }
     const unlockMsg = formatUnlockLine(addScore('blocks', this.score));
+    Sfx.playEnd({ newBest, unlocked: !!unlockMsg });
 
     this.add.rectangle(180, 270, 300, unlockMsg ? 240 : 220, 0x000000, 0.8).setStrokeStyle(2, pal.fg);
     const style = (size, color) => ({ fontSize: size, color, fontFamily: 'monospace', align: 'center', wordWrap: { width: 280 } });

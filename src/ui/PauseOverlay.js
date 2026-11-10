@@ -32,6 +32,7 @@ import Phaser from 'phaser';
 import { bindPhoneInput, setSoftKeys, getSoftKeys } from '../input/PhoneInput.js';
 import { hexToInt } from '../skins/skins.js';
 import { getSkin } from '../skins/SkinManager.js';
+import * as Sfx from '../audio/Sfx.js';
 
 function publish(ctl) {
   window.__vpg = window.__vpg || {};
@@ -81,7 +82,7 @@ export function attachPause(scene) {
     .setDepth(1000)
     .setVisible(false);
 
-  const panel = scene.add.rectangle(180, 236, 284, 210, hexToInt(pal.panel), 1)
+  const panel = scene.add.rectangle(180, 240, 284, 228, hexToInt(pal.panel), 1)
     .setStrokeStyle(3, hexToInt(pal.fg))
     .setScrollFactor(0)
     .setDepth(1001)
@@ -102,16 +103,26 @@ export function attachPause(scene) {
     .setOrigin(0.5).setScrollFactor(0).setDepth(1002).setVisible(false);
   const line2 = scene.add.text(180, 248, 'C / Esc  menu', style('16px', pal.text))
     .setOrigin(0.5).setScrollFactor(0).setDepth(1002).setVisible(false);
-  const line3 = scene.add.text(180, 292, 'P or # to pause', style('14px', pal.accent))
+  const line3 = scene.add.text(180, 286, 'P or # to pause', style('14px', pal.accent))
+    .setOrigin(0.5).setScrollFactor(0).setDepth(1002).setVisible(false);
+  const soundLine = scene.add.text(180, 318, '', style('14px', pal.dim))
     .setOrigin(0.5).setScrollFactor(0).setDepth(1002).setVisible(false);
 
-  const nodes = [dim, panel, title, line1, line2, line3];
+  const nodes = [dim, panel, title, line1, line2, line3, soundLine];
+
+  function refreshSoundLine() {
+    soundLine.setText(Sfx.isMuted() ? 'Sound: Off  ·  M unmute' : 'Sound: On  ·  M mute');
+  }
+  refreshSoundLine();
+  const unsubMute = Sfx.onMuteChange(() => refreshSoundLine());
 
   function showPausedVisual() {
     title.setText('PAUSED').setFontSize(36);
     line1.setVisible(true);
     line2.setVisible(true);
     line3.setVisible(true);
+    soundLine.setVisible(true);
+    refreshSoundLine();
     dim.setVisible(true);
     panel.setVisible(true);
     title.setVisible(true);
@@ -123,6 +134,7 @@ export function attachPause(scene) {
     line1.setVisible(false);
     line2.setVisible(false);
     line3.setVisible(false);
+    soundLine.setVisible(false);
     dim.setVisible(true);
     panel.setVisible(true);
     title.setVisible(true);
@@ -161,7 +173,7 @@ export function attachPause(scene) {
     state.timers = [];
   }
 
-  function pause() {
+  function pause(opts) {
     if (state.shutdown || scene.alive === false) return false;
     if (state.paused && !state.countdown) return false;
     if (state.countdown) {
@@ -174,6 +186,7 @@ export function attachPause(scene) {
     setSoftKeys('Resume', 'Menu');
     showPausedVisual();
     publish(ctl);
+    if (!(opts && opts.silent)) Sfx.pause();
     return true;
   }
 
@@ -187,15 +200,18 @@ export function attachPause(scene) {
     showCountdownVisual('3');
     setSoftKeys('Resume', 'Menu');
     publish(ctl);
+    Sfx.countdownTick();
     state.timers.push(setTimeout(() => {
       if (!state.countdown) return;
       showCountdownVisual('2');
       publish(ctl);
+      Sfx.countdownTick();
     }, 330));
     state.timers.push(setTimeout(() => {
       if (!state.countdown) return;
       showCountdownVisual('1');
       publish(ctl);
+      Sfx.countdownTick();
     }, 660));
     state.timers.push(setTimeout(() => finishResume(), 1000));
   }
@@ -209,6 +225,7 @@ export function attachPause(scene) {
     unfreezeClock();
     setSoftKeys(state.savedSoft.left || '', state.savedSoft.right || '');
     publish(ctl);
+    Sfx.resume();
   }
 
   function toMenu() {
@@ -236,7 +253,7 @@ export function attachPause(scene) {
       publish(ctl);
       return;
     }
-    pause();
+    pause({ silent: true });
   }
 
   const ctl = {
@@ -284,6 +301,7 @@ export function attachPause(scene) {
   scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
     state.shutdown = true;
     clearTimers();
+    if (typeof unsubMute === 'function') unsubMute();
     document.removeEventListener('visibilitychange', visHandler);
     window.removeEventListener('blur', blurHandler);
     if (scene.__pauseCtl === ctl) scene.__pauseCtl = null;

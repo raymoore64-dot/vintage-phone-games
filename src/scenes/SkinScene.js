@@ -3,6 +3,7 @@ import { bindPhoneInput, setSoftKeys } from '../input/PhoneInput.js';
 import SKINS, { hexToInt, skinIndex } from '../skins/skins.js';
 import { getSkin, previewSkin, setSkin } from '../skins/SkinManager.js';
 import { getTotal, isUnlocked, unlockAtOf } from '../progress/Progress.js';
+import * as Sfx from '../audio/Sfx.js';
 
 export default class SkinScene extends Phaser.Scene {
   constructor() {
@@ -58,7 +59,9 @@ export default class SkinScene extends Phaser.Scene {
 
   showIndex(i) {
     const n = SKINS.length;
-    this.viewIndex = ((i % n) + n) % n;
+    const next = ((i % n) + n) % n;
+    if (next !== this.viewIndex) Sfx.menuMove();
+    this.viewIndex = next;
     const skin = SKINS[this.viewIndex];
     if (isUnlocked(skin)) {
       previewSkin(skin.id);
@@ -75,11 +78,13 @@ export default class SkinScene extends Phaser.Scene {
       this.showToast(`Unlocks at ${unlockAtOf(skin)} pts`);
       return;
     }
+    Sfx.menuSelect();
     setSkin(skin.id);
     this.scene.start('MenuScene');
   }
 
   cancel() {
+    Sfx.back();
     setSkin(this.savedId);
     this.scene.start('MenuScene');
   }
