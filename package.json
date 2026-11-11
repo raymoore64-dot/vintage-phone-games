@@ -1,5 +1,6 @@
 {
-  "name": "vintage-phone-games",
+  "name": "linicro",
+  "description": "Linicro, vintage phone games by Studio Linicro.",
   "private": true,
   "version": "0.1.0",
   "type": "module",

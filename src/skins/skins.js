@@ -1,5 +1,5 @@
 /*
- * Phone skins for Vintage Phone Games.
+ * Phone skins for Linicro.
  *
  * Every phone is an original, invented brand — no real manufacturer names
  * or logos. Each entry is a complete description of the HTML bezel (via CSS

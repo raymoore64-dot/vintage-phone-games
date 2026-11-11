@@ -1,4 +1,4 @@
-# Vintage Phone Games: iOS build (Capacitor 8)
+# Linicro: iOS build (Capacitor 8)
 
 The web game is wrapped with **Capacitor 8.6** (Swift Package Manager, no
 CocoaPods). The `ios/` Xcode project is **already generated and committed**
@@ -7,8 +7,10 @@ CocoaPods). The `ios/` Xcode project is **already generated and committed**
 
 | | |
 |---|---|
-| App ID / bundle id | `com.studiolinicro.vintagephonegames` |
-| Display name | Vintage Phone Games |
+| App ID / bundle id | `com.studiolinicro.linicro` |
+| Display name | Linicro |
+| Publisher | Studio Linicro |
+| Subtitle / search | vintage phone games (not the product name) |
 | Web dir | `dist` (Vite build) |
 | iOS minimum | 15.0 |
 | Devices | iPhone only (`TARGETED_DEVICE_FAMILY = 1`), portrait only |
@@ -26,7 +28,7 @@ node -v                                # Node 20+ (22 LTS recommended)
 ## 1. Get the code and build the web app
 
 ```bash
-git clone <your repo url> vintage-phone-games
+git clone <your repo url> vintage-phone-games   # repository name; the app is Linicro
 cd vintage-phone-games
 npm ci                                 # exact versions from package-lock.json
 npm run build                          # Vite -> dist/
@@ -77,7 +79,7 @@ Wait for "Resolving Package Graph" to finish (first time it downloads
 1. Select the **App** project > **App** target > **Signing & Capabilities**.
 2. Tick **Automatically manage signing**, pick your **Team** (Studio Linicro's
    Apple Developer account). The bundle id is already
-   `com.studiolinicro.vintagephonegames`; if Xcode says it is taken, register
+   `com.studiolinicro.linicro`; if Xcode says it is taken, register
    it at developer.apple.com > Identifiers first.
 3. **+ Capability > Game Center**. The entitlements file
    `App/App.entitlements` is already wired (`CODE_SIGN_ENTITLEMENTS`).
@@ -136,8 +138,10 @@ Web side (`index.html`)
 
 ## 9. Ship to TestFlight / App Store
 
-1. App Store Connect > My Apps > **+ New App**: iOS, name *Vintage Phone
-   Games*, bundle id `com.studiolinicro.vintagephonegames`, SKU of your choice.
+1. App Store Connect > My Apps > **+ New App**: iOS, name *Linicro*,
+   bundle id `com.studiolinicro.linicro`, SKU of your choice.
+   Publisher stays Studio Linicro. The product name is Linicro; use
+   "vintage phone games" only as a subtitle or search keyword.
 2. Game Center: create the leaderboards and achievements in
    `docs/GAMECENTER.md`.
 3. Xcode: select **Any iOS Device (arm64)** > Product > **Archive** >

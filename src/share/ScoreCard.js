@@ -4,8 +4,8 @@
  *   square 1080x1080
  * Shows the current phone shell (its CSS colours turned into canvas
  * fills, plus its wear & tear), the LCD with game name, score / best and
- * perk in a pixel font, the pocket pet, 'Vintage Phone Games' and
- * 'by Studio Linicro'.
+ * perk in a pixel font, the pocket pet, 'LINICRO' (with the subtitle
+ * 'vintage phone games') and 'by Studio Linicro'.
  *
  * Pixel font: text is drawn tiny on an offscreen canvas, thresholded and
  * blown up cell by cell, so it looks like LCD pixels without any font
@@ -396,9 +396,8 @@ export function renderScoreCard(opts = {}) {
     drawPhone(ctx, 70, 50, pw, info);
     const cx = 70 + pw + (1080 - 70 - pw) / 2;
     const colW = 1080 - 70 - pw - 60;
-    pixelText(ctx, 'VINTAGE', cx, 110, 11, pal.fg, 'center', colW);
-    pixelText(ctx, 'PHONE', cx, 210, 11, pal.fg, 'center', colW);
-    pixelText(ctx, 'GAMES', cx, 310, 11, pal.fg, 'center', colW);
+    pixelText(ctx, 'LINICRO', cx, 150, 13, pal.fg, 'center', colW);
+    pixelText(ctx, 'VINTAGE PHONE GAMES', cx, 280, 4, '#bbbbbb', 'center', colW);
     pixelText(ctx, info.gameName.toUpperCase(), cx, 470, 6, pal.warn, 'center', colW);
     pixelText(ctx, String(info.score), cx, 540, 14, '#ffffff', 'center', colW);
     if (info.tag) {
@@ -410,8 +409,9 @@ export function renderScoreCard(opts = {}) {
     }
     pixelText(ctx, 'BY STUDIO LINICRO', cx, 950, 4, '#bbbbbb', 'center', colW);
   } else {
-    pixelText(ctx, 'VINTAGE PHONE GAMES', 540, 80, 8, pal.fg, 'center', 980);
-    if (info.tag) pixelText(ctx, info.tag, 540, 150, 6, pal.warn, 'center', 980);
+    pixelText(ctx, 'LINICRO', 540, 36, 12, pal.fg, 'center', 980);
+    pixelText(ctx, 'VINTAGE PHONE GAMES', 540, 132, 4, '#bbbbbb', 'center', 980);
+    if (info.tag) pixelText(ctx, info.tag, 540, 172, 5, pal.warn, 'center', 980);
     const pw = 560;
     const ph = phoneHeightFor(pw, info.skin);
     const top = 220;
@@ -437,7 +437,7 @@ export function canvasToBlob(canvas) {
  * Web: Web Share API with the file, else a PNG download.
  * Returns { method: 'share' | 'download' | 'cancelled' | 'failed' }.
  */
-export async function shareImage(canvas, { filename = 'vintage-phone-games.png', title = 'Vintage Phone Games', text = '' } = {}) {
+export async function shareImage(canvas, { filename = 'linicro.png', title = 'Linicro', text = '' } = {}) {
   const blob = await canvasToBlob(canvas);
   if (!blob) return { method: 'failed' };
   lastBlob = blob;
@@ -479,11 +479,11 @@ export function slug(s) {
 /** One call: render + share. */
 export async function shareScore(opts = {}) {
   const canvas = renderScoreCard(opts);
-  const name = `vpg-${opts.tag ? `${slug(opts.tag)}-` : ''}${slug(opts.gameName || 'score')}-${Math.floor(Number(opts.score) || 0)}-${opts.format || 'story'}.png`;
+  const name = `linicro-${opts.tag ? `${slug(opts.tag)}-` : ''}${slug(opts.gameName || 'score')}-${Math.floor(Number(opts.score) || 0)}-${opts.format || 'story'}.png`;
   const res = await shareImage(canvas, {
     filename: name,
-    title: 'Vintage Phone Games',
-    text: opts.text || `I scored ${Math.floor(Number(opts.score) || 0)} in ${opts.gameName || 'a game'} on Vintage Phone Games. Can you beat it?`
+    title: 'Linicro',
+    text: opts.text || `I scored ${Math.floor(Number(opts.score) || 0)} in ${opts.gameName || 'a game'} on Linicro. Can you beat it?`
   });
   lastShare = { ...res, filename: name, w: canvas.width, h: canvas.height };
   return lastShare;

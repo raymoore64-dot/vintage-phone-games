@@ -112,7 +112,7 @@ function blobToBase64(blob) {
 }
 
 /** Native share of a PNG blob. Returns { method } or null when not native. */
-export async function shareFile(blob, { filename = 'vintage-phone-games.png', title = 'Vintage Phone Games', text = '' } = {}) {
+export async function shareFile(blob, { filename = 'linicro.png', title = 'Linicro', text = '' } = {}) {
   if (!isNative() || !blob) return null;
   try {
     const [{ Filesystem, Directory }, { Share }] = await Promise.all([
@@ -134,7 +134,7 @@ export async function shareFile(blob, { filename = 'vintage-phone-games.png', ti
  * Share plain text: native share sheet, then the Web Share API, then the
  * clipboard. Returns { method: 'share' | 'clipboard' | 'cancelled' | 'failed' }.
  */
-export async function shareText(text, { title = 'Vintage Phone Games' } = {}) {
+export async function shareText(text, { title = 'Linicro' } = {}) {
   if (isNative()) {
     try {
       const { Share } = await import('@capacitor/share');

@@ -4,7 +4,7 @@
  * names, descriptions and points to type in.
  */
 
-export const PREFIX = 'com.studiolinicro.vintagephonegames';
+export const PREFIX = 'com.studiolinicro.linicro';
 
 export const GAME_IDS = ['snake', 'bounce', 'impact', 'bricks', 'blocks', 'simon', 'hopper', 'fishing', 'rhythm', 'rally'];
 

@@ -3,7 +3,7 @@ import Capacitor
 import GameKit
 import UIKit
 
-/// Minimal Game Center bridge for Vintage Phone Games.
+/// Minimal Game Center bridge for Linicro.
 /// JS name: "GameCenter". Methods: authenticate, isAuthenticated, submitScore,
 /// showLeaderboard, showDashboard, unlockAchievement, resetAchievements.
 @objc(GameCenterPlugin)

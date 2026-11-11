@@ -1,5 +1,5 @@
 /*
- * Chiptune background music for Vintage Phone Games.
+ * Chiptune background music for Linicro.
  *
  * All themes are original step-sequencer loops — square / triangle lead,
  * triangle bass, and a short noise hat. Nothing here is a ringtone,
