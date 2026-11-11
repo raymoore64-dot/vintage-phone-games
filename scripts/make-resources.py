@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Draws the original app icon and splash for Vintage Phone Games with PIL
+Draws the original app icon and splash for Linicro with PIL
 (no external assets). Output (for `npx @capacitor/assets generate --ios`):
 
   resources/icon.png          1024x1024, opaque (App Store rejects alpha)
@@ -159,7 +159,8 @@ def make_splash(name, inner, outer, title):
     ph = phone(1.1)
     bg.alpha_composite(ph, ((size - ph.width) // 2, 760))
     d = ImageDraw.Draw(bg)
-    pixel_text(d, "VINTAGE PHONE GAMES", size // 2, 560, 14, title)
+    pixel_text(d, "LINICRO", size // 2, 480, 22, title)
+    pixel_text(d, "VINTAGE PHONE GAMES", size // 2, 680, 8, (170, 176, 186))
     pixel_text(d, "BY STUDIO LINICRO", size // 2, 1960, 8, (170, 176, 186))
     bg.convert("RGB").save(OUT / name, optimize=True)
 

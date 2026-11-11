@@ -29,18 +29,18 @@ display name (English) as below.
 
 | # | Leaderboard ID | Reference / display name | Notes |
 |---|---|---|---|
-| 1 | `com.studiolinicro.vintagephonegames.lb.snake` | Snake: Trail | Best score per game |
-| 2 | `com.studiolinicro.vintagephonegames.lb.bounce` | Bounce: Flip | Best score per game |
-| 3 | `com.studiolinicro.vintagephonegames.lb.impact` | Space Impact: Echo | Best score per game |
-| 4 | `com.studiolinicro.vintagephonegames.lb.bricks` | Bricks: Chain | Best score per game |
-| 5 | `com.studiolinicro.vintagephonegames.lb.blocks` | Blocks: Quake | Best score per game |
-| 6 | `com.studiolinicro.vintagephonegames.lb.simon` | Simon: Reverse | Best score per game |
-| 7 | `com.studiolinicro.vintagephonegames.lb.hopper` | Signal Hopper | Best score per game |
-| 8 | `com.studiolinicro.vintagephonegames.lb.fishing` | Buzz Fishing | Best score per game |
-| 9 | `com.studiolinicro.vintagephonegames.lb.rhythm` | Ring Rhythm | Best score per game |
-| 10 | `com.studiolinicro.vintagephonegames.lb.rally` | Dial-Up Rally | Best score per game |
-| 11 | `com.studiolinicro.vintagephonegames.lb.daily` | Daily Challenge | Recurring leaderboard: start any day 00:00, duration 1 day, restarts every 1 day |
-| 12 | `com.studiolinicro.vintagephonegames.lb.total` | Lifetime Points | Submission type Most Recent Score works too (total only grows) |
+| 1 | `com.studiolinicro.linicro.lb.snake` | Snake: Trail | Best score per game |
+| 2 | `com.studiolinicro.linicro.lb.bounce` | Bounce: Flip | Best score per game |
+| 3 | `com.studiolinicro.linicro.lb.impact` | Space Impact: Echo | Best score per game |
+| 4 | `com.studiolinicro.linicro.lb.bricks` | Bricks: Chain | Best score per game |
+| 5 | `com.studiolinicro.linicro.lb.blocks` | Blocks: Quake | Best score per game |
+| 6 | `com.studiolinicro.linicro.lb.simon` | Simon: Reverse | Best score per game |
+| 7 | `com.studiolinicro.linicro.lb.hopper` | Signal Hopper | Best score per game |
+| 8 | `com.studiolinicro.linicro.lb.fishing` | Buzz Fishing | Best score per game |
+| 9 | `com.studiolinicro.linicro.lb.rhythm` | Ring Rhythm | Best score per game |
+| 10 | `com.studiolinicro.linicro.lb.rally` | Dial-Up Rally | Best score per game |
+| 11 | `com.studiolinicro.linicro.lb.daily` | Daily Challenge | Recurring leaderboard: start any day 00:00, duration 1 day, restarts every 1 day |
+| 12 | `com.studiolinicro.linicro.lb.total` | Lifetime Points | Submission type Most Recent Score works too (total only grows) |
 
 ## Achievements (15, 300 points total)
 
@@ -52,21 +52,21 @@ achievement).
 
 | # | Achievement ID | Name | Description | Points | Hidden |
 |---|---|---|---|---|---|
-| 1 | `com.studiolinicro.vintagephonegames.ach.first_game` | Hello World | Finish your first game. | 5 | No |
-| 2 | `com.studiolinicro.vintagephonegames.ach.all_games` | Full Menu | Play all ten games at least once. | 25 | No |
-| 3 | `com.studiolinicro.vintagephonegames.ach.phone_solara` | Bright Idea | Unlock the SOLARA Sunburst phone (500 points). | 10 | No |
-| 4 | `com.studiolinicro.vintagephonegames.ach.phone_mintra` | Fresh Minty | Unlock the MINTRA Minty phone (1,500 points). | 15 | No |
-| 5 | `com.studiolinicro.vintagephonegames.ach.phone_aurum` | Corner Office | Unlock the AURUM Executive phone (3,500 points). | 20 | No |
-| 6 | `com.studiolinicro.vintagephonegames.ach.phone_volta` | Neon Nights | Unlock the VOLTA Neon phone (7,000 points). | 25 | No |
-| 7 | `com.studiolinicro.vintagephonegames.ach.phone_proto` | Prototype | Find the secret see-through prototype phone. | 20 | Yes |
-| 8 | `com.studiolinicro.vintagephonegames.ach.points_25k` | Pocket Legend | Earn 25,000 lifetime points. | 30 | No |
-| 9 | `com.studiolinicro.vintagephonegames.ach.codes_all` | Code Breaker | Find every entry in the Code book. | 30 | Yes |
-| 10 | `com.studiolinicro.vintagephonegames.ach.pet_adult` | All Grown Up | Raise your Pocket Pet to Adult. | 20 | No |
-| 11 | `com.studiolinicro.vintagephonegames.ach.dares_10` | No Chicken | Beat 10 daily dares from your friends. | 20 | No |
-| 12 | `com.studiolinicro.vintagephonegames.ach.wap_first` | Downloading... | Download your first WAP game. | 10 | No |
-| 13 | `com.studiolinicro.vintagephonegames.ach.wap_all` | Full Inbox | Download all four WAP games. | 20 | No |
-| 14 | `com.studiolinicro.vintagephonegames.ach.daily_first` | Daily Driver | Complete your first Daily Challenge. | 10 | No |
-| 15 | `com.studiolinicro.vintagephonegames.ach.daily_streak_7` | Week Streak | Play the Daily Challenge 7 days in a row. | 40 | No |
+| 1 | `com.studiolinicro.linicro.ach.first_game` | Hello World | Finish your first game. | 5 | No |
+| 2 | `com.studiolinicro.linicro.ach.all_games` | Full Menu | Play all ten games at least once. | 25 | No |
+| 3 | `com.studiolinicro.linicro.ach.phone_solara` | Bright Idea | Unlock the SOLARA Sunburst phone (500 points). | 10 | No |
+| 4 | `com.studiolinicro.linicro.ach.phone_mintra` | Fresh Minty | Unlock the MINTRA Minty phone (1,500 points). | 15 | No |
+| 5 | `com.studiolinicro.linicro.ach.phone_aurum` | Corner Office | Unlock the AURUM Executive phone (3,500 points). | 20 | No |
+| 6 | `com.studiolinicro.linicro.ach.phone_volta` | Neon Nights | Unlock the VOLTA Neon phone (7,000 points). | 25 | No |
+| 7 | `com.studiolinicro.linicro.ach.phone_proto` | Prototype | Find the secret see-through prototype phone. | 20 | Yes |
+| 8 | `com.studiolinicro.linicro.ach.points_25k` | Pocket Legend | Earn 25,000 lifetime points. | 30 | No |
+| 9 | `com.studiolinicro.linicro.ach.codes_all` | Code Breaker | Find every entry in the Code book. | 30 | Yes |
+| 10 | `com.studiolinicro.linicro.ach.pet_adult` | All Grown Up | Raise your Pocket Pet to Adult. | 20 | No |
+| 11 | `com.studiolinicro.linicro.ach.dares_10` | No Chicken | Beat 10 daily dares from your friends. | 20 | No |
+| 12 | `com.studiolinicro.linicro.ach.wap_first` | Downloading... | Download your first WAP game. | 10 | No |
+| 13 | `com.studiolinicro.linicro.ach.wap_all` | Full Inbox | Download all four WAP games. | 20 | No |
+| 14 | `com.studiolinicro.linicro.ach.daily_first` | Daily Driver | Complete your first Daily Challenge. | 10 | No |
+| 15 | `com.studiolinicro.linicro.ach.daily_streak_7` | Week Streak | Play the Daily Challenge 7 days in a row. | 40 | No |
 
 ## Xcode side
 

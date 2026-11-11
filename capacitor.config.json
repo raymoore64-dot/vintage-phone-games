@@ -1,6 +1,6 @@
 {
-  "appId": "com.studiolinicro.vintagephonegames",
-  "appName": "Vintage Phone Games",
+  "appId": "com.studiolinicro.linicro",
+  "appName": "Linicro",
   "webDir": "dist",
   "ios": {
     "contentInset": "never",

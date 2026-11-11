@@ -10,7 +10,8 @@ import * as Music from '../audio/Music.js';
  */
 
 const LINES = [
-  ['VINTAGE', 'h1'], ['PHONE GAMES', 'h1'], ['', ''],
+  ['Linicro', 'h1'], ['', ''],
+  ['vintage phone games', 'sub'], ['', ''],
   ['a Studio Linicro production', 'sub'], ['', ''], ['', ''],
   ['SNAKE WRANGLER', 'role'], ['Dex', 'name'], ['', ''],
   ['CATERING', 'role'], ['Mum', 'name'], ['(tea is in the microwave)', 'sub'], ['', ''],

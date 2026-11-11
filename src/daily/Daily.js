@@ -193,13 +193,13 @@ export function blockBar(n) {
   return '▓'.repeat(n) + '░'.repeat(5 - n);
 }
 
-/** Wordle-style text, e.g. "Vintage Phone Games Daily #12 📱 Snake 412 ▓▓▓░░ streak 5" */
+/** Wordle-style text, e.g. "Linicro Daily #12 📱 Snake 412 ▓▓▓░░ streak 5" */
 export function shareText(key = today()) {
   const c = challengeFor(key);
   const h = entry(key);
   const score = h ? h.score : 0;
   const streak = h ? (load().last === key ? load().streak : streakOn(key)) : 0;
-  const line1 = `Vintage Phone Games Daily #${c.n} 📱 ${c.gameName} ${score} ${blockBar(blocksFor(c.game, score))} streak ${streak}`;
+  const line1 = `Linicro Daily #${c.n} 📱 ${c.gameName} ${score} ${blockBar(blocksFor(c.game, score))} streak ${streak}`;
   return `${line1}\n${c.mod.name} · can you beat it?`;
 }
 

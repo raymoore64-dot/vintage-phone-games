@@ -1,5 +1,5 @@
 /*
- * Tiny WebAudio engine for Vintage Phone Games.
+ * Tiny WebAudio engine for Linicro.
  *
  * Safe no-throw: missing AudioContext, autoplay blocks, or a mid-beep
  * error are all swallowed. The context is created and resumed only after
